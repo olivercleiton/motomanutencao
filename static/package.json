@@ -1,0 +1,16 @@
+{
+  "name": "motomanutencao",
+  "version": "1.0.0",
+  "description": "Aplicativo para motoboys controlarem a manutenção de suas motos",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["pwa", "motoboy", "manutencao", "moto"],
+  "author": "Seu Nome",
+  "license": "MIT"
+}

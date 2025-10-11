@@ -1,0 +1,255 @@
+:root {
+    --primary-color: #006400;
+    --secondary-color: #ff8c00;
+    --light-color: #f5f5f5;
+    --dark-color: #333;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    padding-bottom: 80px;
+}
+
+.navbar {
+    background-color: var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #004d00;
+    border-color: #004d00;
+}
+
+.btn-warning {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: none;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.main-tabs .nav-link {
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.main-tabs .nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    border-bottom: 3px solid var(--primary-color);
+    background: transparent;
+}
+
+.service-badge {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.stats-card {
+    text-align: center;
+    padding: 15px;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.floating-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.service-item {
+    border-left: 4px solid var(--primary-color);
+    transition: transform 0.2s;
+}
+
+.service-item:hover {
+    transform: translateX(5px);
+}
+
+.maintenance-due {
+    border-left: 4px solid #dc3545;
+}
+
+.maintenance-soon {
+    border-left: 4px solid #ffc107;
+}
+
+.cost-summary {
+    background: linear-gradient(135deg, #006400 0%, #008000 100%);
+    color: white;
+    border-radius: 10px;
+}
+
+.motorcycle-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.vehicle-selector {
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.vehicle-selector:hover, .vehicle-selector.active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.vehicle-selector.active {
+    border: 2px solid var(--primary-color);
+}
+
+.delete-vehicle-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #dc3545;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.delete-vehicle-btn:hover {
+    opacity: 1;
+}
+
+.chart-container {
+    height: 250px;
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.high-contrast {
+    background-color: black;
+    color: white;
+}
+
+.high-contrast .card {
+    background-color: #222;
+    color: white;
+}
+
+.high-contrast .navbar {
+    background-color: #000;
+    border-bottom: 2px solid yellow;
+}
+
+.maintenance-config-item {
+    border-left: 4px solid #6c757d;
+    padding-left: 10px;
+    margin-bottom: 10px;
+}
+
+/* Estilos para tela de login */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-logo i {
+    font-size: 4rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.login-logo h2 {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Banner de instalação */
+.install-banner {
+    position: fixed;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1001;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.install-banner.hidden {
+    display: none;
+}

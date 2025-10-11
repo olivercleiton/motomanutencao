@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="./manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotoManutenção - Controle para Motoboys</title>
+    <meta name="theme-color" content="#006400">
+    <meta name="description" content="Aplicativo para motoboys controlarem a manutenção de suas motos">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes"> 
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MotoManutenção">
+    
+    <!-- Favicon simples -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏍️</text></svg>">
+	
+    <!-- Ícones PWA -->
+    <!--			
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
+    -->	
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-logo">
+            <i class="fas fa-motorcycle"></i>
+            <h2>MotoManutenção</h2>
+            <p class="text-muted">Controle de manutenção para motoboys</p>
+        </div>
+        <div class="card" style="max-width: 400px; width: 100%;">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-center">Acessar Sistema</h5>
+            </div>
+            <div class="card-body">
+                <form id="loginForm" onsubmit="Auth.handleLogin(event)">
+                    <div class="mb-3">
+                        <label for="loginEmail" class="form-label">Email</label>
+       			<input type="email" class="form-control" id="loginEmail" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">Senha</label>
+        		<input type="password" class="form-control" id="loginPassword" placeholder="Sua senha" required>
+                    </div>
+		    <button type="submit" class="btn btn-primary w-100">Entrar</button>	
+                   </form>
+                <hr>
+                <div class="text-center">
+                    <p>Não tem uma conta? <a href="#" onclick="UI.showRegisterScreen()">Cadastre-se</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Cadastro -->
+    <div id="registerScreen" class="login-container hidden">
+        <div class="login-logo">
+            <i class="fas fa-motorcycle"></i>
+            <h2>MotoManutenção</h2>
+            <p class="text-muted">Controle de manutenção para motoboys</p>
+        </div>
+        <div class="card" style="max-width: 400px; width: 100%;">
+            <div class="card-header">
+                <h5 class="card-title mb-0 text-center">Criar Conta</h5>
+            </div>
+            <div class="card-body">
+                <form id="registerForm" onsubmit="Auth.handleRegister(event)">
+                    <div class="mb-3">
+                        <label class="form-label">Nome completo</label>
+                        <input type="text" class="form-control" id="registerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="registerEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="registerPassword" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar senha</label>
+                        <input type="password" class="form-control" id="registerConfirmPassword" required minlength="6">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="registerBtn">
+                            <span id="registerText">Criar Conta</span>
+                            <span id="registerSpinner" class="spinner-border spinner-border-sm hidden" role="status"></span>
+                        </button>
+                    </div>
+                </form>
+                <hr>
+                <div class="text-center">
+                    <p>Já tem uma conta? <a href="#" onclick="UI.showLoginScreen()">Fazer login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicativo Principal (inicialmente oculto) -->
+    <div id="appContent" class="hidden">
+        <!-- Barra de navegação -->
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-motorcycle me-2"></i>MotoManutenção
+                </a>
+                <div class="d-flex">
+                    <button class="btn btn-outline-light me-2" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="btn btn-outline-light me-2" onclick="UI.toggleContrast()">
+                        <i class="fas fa-adjust"></i>
+                    </button>
+                    <button class="btn btn-outline-light" onclick="Auth.handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Conteúdo principal -->
+        <div class="container mt-4">
+            <!-- Seletor de Veículos -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Meus Veículos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="vehiclesList">
+                        <!-- Veículos serão carregados aqui -->
+                    </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+                            <i class="fas fa-plus me-1"></i>Adicionar Veículo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas principais -->
+            <ul class="nav nav-tabs main-tabs mb-4" id="mainTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab">Início</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">Serviços</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">Estatísticas</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">Configurações</button>
+                </li>
+            </ul>
+
+            <!-- Conteúdo das abas -->
+            <div class="tab-content" id="mainTabsContent">
+                <!-- Aba Início -->
+                <div class="tab-pane fade show active" id="home" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0" id="currentVehicleTitle">Minha Moto</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <img src="https://cdn-icons-png.flaticon.com/512/3073/3073471.png" alt="Moto" class="motorcycle-img" style="max-height: 150px;">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Modelo</label>
+                                        <input type="text" class="form-control" id="bikeModel">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Ano</label>
+                                        <input type="number" class="form-control" id="bikeYear">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Placa</label>
+                                        <input type="text" class="form-control" id="bikePlate">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Quilometragem atual</label>
+                                        <input type="number" class="form-control" id="currentMileage">
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary" onclick="Vehicles.saveBikeInfo()">Salvar Informações</button>
+                                        <button class="btn btn-outline-danger" onclick="Vehicles.showResetModal()">Resetar Histórico</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Próximas Manutenções</h5>
+                                </div>
+                                <div class="card-body" id="maintenanceAlerts">
+                                    <!-- Alertas de manutenção serão carregados aqui -->
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-4">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Histórico Recente</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentServices">
+                                        <!-- Serviços recentes serão carregados aqui -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Serviços -->
+                <div class="tab-pane fade" id="services" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Registrar Novo Serviço</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="serviceForm" onsubmit="Services.handleAddService(event)">
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de Serviço</label>
+                                    <select class="form-select" id="serviceType" required>
+                                        <option value="">Selecione o tipo de serviço</option>
+                                        <option value="Troca de óleo">Troca de óleo</option>
+                                        <option value="Troca de pneu">Troca de pneu</option>
+                                        <option value="Ajuste de freios">Ajuste de freios</option>
+                                        <option value="Troca de correia">Troca de correia</option>
+                                        <option value="Revisão geral">Revisão geral</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Data do Serviço</label>
+                                    <input type="date" class="form-control" id="serviceDate" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Quilometragem</label>
+                                    <input type="number" class="form-control" id="serviceMileage" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Custo (R$)</label>
+                                    <input type="number" class="form-control" id="serviceCost" step="0.01">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Observações</label>
+                                    <textarea class="form-control" id="serviceNotes" rows="2"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Registrar Serviço</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Histórico de Serviços</h5>
+                            <div>
+                                <input type="text" class="form-control form-control-sm" placeholder="Buscar..." id="serviceSearch">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group" id="servicesList">
+                                <!-- Serviços serão carregados aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Estatísticas -->
+                <div class="tab-pane fade" id="stats" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card stats-card">
+                                <div class="card-body">
+                                    <i class="fas fa-tachometer-alt fa-2x mb-2 text-primary"></i>
+                                    <h3 class="stats-number" id="totalMileage">0</h3>
+                                    <p class="card-text">Quilômetros rodados</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card">
+                                <div class="card-body">
+                                    <i class="fas fa-tools fa-2x mb-2 text-primary"></i>
+                                    <h3 class="stats-number" id="totalServices">0</h3>
+                                    <p class="card-text">Serviços realizados</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card">
+                                <div class="card-body">
+                                    <i class="fas fa-money-bill-wave fa-2x mb-2 text-primary"></i>
+                                    <h3 class="stats-number" id="totalCost">R$ 0</h3>
+                                    <p class="card-text">Total gasto</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Custos por Categoria</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="costChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-body cost-summary">
+                            <h5 class="card-title">Resumo de Custos</h5>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p>Média mensal:</p>
+                                    <h4 id="monthlyAverage">R$ 0,00</h4>
+                                </div>
+                                <div class="col-6">
+                                    <p>Próxima revisão:</p>
+                                    <h4 id="nextMaintenance">0 km</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Configurações -->
+                <div class="tab-pane fade" id="config" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Configurações de Manutenção</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Defina os intervalos de quilometragem para cada tipo de serviço. O sistema irá alertar quando estiver próximo da próxima manutenção.</p>
+                            
+                            <div id="maintenanceConfig">
+                                <!-- Configurações de manutenção serão carregadas aqui -->
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-primary" onclick="Vehicles.saveMaintenanceConfig()">
+                                    <i class="fas fa-save me-1"></i>Salvar Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Gerenciar Veículos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Selecione um veículo para excluí-lo permanentemente. Esta ação não pode ser desfeita.
+                            </div>
+                            
+                            <div class="list-group" id="vehicleManagementList">
+                                <!-- Lista de veículos para gerenciamento -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão flutuante para adicionar serviço -->
+        <div class="floating-btn" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+            <i class="fas fa-plus"></i>
+        </div>
+
+        <!-- Navegação inferior -->
+        <div class="bottom-nav">
+            <div class="container">
+                <div class="d-flex justify-content-around py-2">
+                    <button class="btn btn-link text-dark" onclick="UI.switchTab('home')">
+                        <i class="fas fa-home fa-lg"></i>
+                        <br>
+                        <small>Início</small>
+                    </button>
+                    <button class="btn btn-link text-dark" onclick="UI.switchTab('services')">
+                        <i class="fas fa-tools fa-lg"></i>
+                        <br>
+                        <small>Serviços</small>
+                    </button>
+                    <button class="btn btn-link text-dark" onclick="UI.switchTab('stats')">
+                        <i class="fas fa-chart-bar fa-lg"></i>
+                        <br>
+                        <small>Estatísticas</small>
+                    </button>
+                    <button class="btn btn-link text-dark" onclick="UI.switchTab('config')">
+                        <i class="fas fa-cog fa-lg"></i>
+                        <br>
+                        <small>Configurações</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar veículo -->
+    <div class="modal fade" id="addVehicleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Novo Veículo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vehicleForm" onsubmit="Vehicles.handleAddVehicle(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Nome do Veículo</label>
+                            <input type="text" class="form-control" id="vehicleName" required placeholder="Ex: CG 160 Titan">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="vehicleModel" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ano</label>
+                            <input type="number" class="form-control" id="vehicleYear" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" id="vehiclePlate">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quilometragem atual</label>
+                            <input type="number" class="form-control" id="vehicleMileage" required>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Veículo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar serviço (para mobile) -->
+    <div class="modal fade" id="addServiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Novo Serviço</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="mobileServiceForm" onsubmit="Services.handleAddServiceMobile(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Serviço</label>
+                            <select class="form-select" id="mobileServiceType" required>
+                                <option value="">Selecione o tipo de serviço</option>
+                                <option value="Troca de óleo">Troca de óleo</option>
+                                <option value="Troca de pneu">Troca de pneu</option>
+                                <option value="Ajuste de freios">Ajuste de freios</option>
+                                <option value="Troca de correia">Troca de correia</option>
+                                <option value="Revisão geral">Revisão geral</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Data do Serviço</label>
+                            <input type="date" class="form-control" id="mobileServiceDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quilometragem</label>
+                            <input type="number" class="form-control" id="mobileServiceMileage" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Custo (R$)</label>
+                            <input type="number" class="form-control" id="mobileServiceCost" step="0.01">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação para resetar histórico -->
+    <div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Reset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja resetar o histórico deste veículo? Todos os serviços registrados serão excluídos permanentemente. Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="Vehicles.resetVehicleHistory()">Resetar Histórico</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação para excluir veículo -->
+    <div class="modal fade" id="deleteVehicleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir este veículo? Todos os dados, incluindo serviços registrados, serão excluídos permanentemente. Esta ação não pode ser desfeita.</p>
+                    <p class="fw-bold" id="vehicleToDeleteName"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteVehicleBtn">Excluir Veículo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner de instalação do app -->
+    <div class="install-banner hidden" id="installBanner">
+        <span>Instale o MotoManutenção no seu celular!</span>
+        <button class="btn btn-sm btn-light" id="installAppBtn">Instalar</button>
+        <button class="btn btn-sm btn-link text-light" id="dismissInstallBtn">X</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Módulos da aplicação -->
+   <script src="js/utils.js"></script>
+   <script src="js/api.js"></script>
+   <script src="js/auth.js"></script>
+   <script src="js/vehicles.js"></script>
+   <script src="js/services.js"></script>
+   <script src="js/stats.js"></script>
+   <script src="js/ui.js"></script>
+   <script src="js/app.js"></script> 
+</body>
+</html>
