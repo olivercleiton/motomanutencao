@@ -253,3 +253,40 @@ body {
 .install-banner.hidden {
     display: none;
 }
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-container input {
+    padding-right: 45px;
+    width: 100%;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    transition: color 0.15s ease-in-out;
+}
+
+.btn-toggle-password:hover {
+    color: #495057;
+    background-color: #f8f9fa;
+}
+
+.btn-toggle-password:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
