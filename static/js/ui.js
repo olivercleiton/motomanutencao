@@ -137,6 +137,27 @@ const UI = {
         return new Intl.NumberFormat('pt-BR').format(number);
     },
 
+    // Alternar visibilidade da senha - NOVO MÉTODO ADICIONADO
+    togglePassword(inputId, button) {
+        const passwordInput = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            button.setAttribute('aria-label', 'Ocultar senha');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            button.setAttribute('aria-label', 'Mostrar senha');
+        }
+        
+        // Foca no campo de senha após alternar
+        passwordInput.focus();
+    },
+
     // Alternar modo de alto contraste
     toggleContrast() {
         document.body.classList.toggle('high-contrast');
