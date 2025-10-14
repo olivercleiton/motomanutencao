@@ -1,4 +1,4 @@
-// Gerenciamento de autenticação - versão CORRIGIDA
+// auth.js - versão FINAL com persistência
 class Auth {
     static currentUser = null;
 
@@ -9,149 +9,105 @@ class Auth {
         
         if (token && user) {
             this.currentUser = JSON.parse(user);
-            if (window.API) {
-                window.API.token = token;
-            }
+            if (window.API) window.API.token = token;
             return true;
         }
         return false;
     }
 
-    // Processar login - VERSÃO CORRIGIDA E SIMPLIFICADA
+    // Processar login
     static async handleLogin(event = null) {
-        if (event) {
-            event.preventDefault();
-        }
+        if (event) event.preventDefault();
         
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        
         console.log('🔧 Tentando login com:', email);
 
         try {
-            if (!window.API || !window.API.login) {
-                throw new Error('API não está carregada corretamente');
-            }
+            if (!window.API?.login) throw new Error('API não carregada corretamente');
 
-            console.log('🔧 Enviando requisição para:', window.API.BASE_URL + '/auth/login');
-            
             const result = await window.API.login(email, password);
             console.log('✅ Resposta do servidor:', result);
-            
+
+            // ✅ Persistência
+            localStorage.setItem('jwt_token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
+            this.currentUser = result.user;
+
             alert('Login realizado com sucesso!');
-            
-            // ✅ CORREÇÃO: Mostrar app PRIMEIRO (sincrono)
-            if (window.UI && typeof window.UI.showAppContent === 'function') {
-                window.UI.showAppContent();
-            } else {
-                // Fallback direto
-                const loginScreen = document.getElementById('loginScreen');
-                const appContent = document.getElementById('appContent');
-                if (loginScreen && appContent) {
-                    loginScreen.classList.add('hidden');
-                    appContent.classList.remove('hidden');
-                }
+
+            // Mostrar app
+            if (window.UI?.showAppContent) window.UI.showAppContent();
+            else {
+                document.getElementById('loginScreen')?.classList.add('hidden');
+                document.getElementById('appContent')?.classList.remove('hidden');
             }
-            
-            // ✅ CORREÇÃO: Carregar veículos DEPOIS de mostrar a tela
+
+            // Carregar veículos depois
             setTimeout(async () => {
-                try {
-                    if (window.Vehicles && window.Vehicles.loadVehicles) {
-                        await window.Vehicles.loadVehicles();
-                        console.log('✅ Veículos carregados após login');
-                    } else {
-                        console.error('Vehicles não disponível');
-                    }
-                } catch (vehicleError) {
-                    console.error('Erro ao carregar veículos:', vehicleError);
-                    // Não impede o uso do app
-                }
+                try { await window.Vehicles?.loadVehicles(); }
+                catch (e) { console.error('Erro ao carregar veículos:', e); }
             }, 100);
-            
+
         } catch (error) {
             console.error('❌ Erro no login:', error);
             alert('Erro no login: ' + error.message);
         }
     }
 
-    // Processar cadastro - CORRIGIDO
+    // Processar cadastro
     static async handleRegister(event = null) {
-        if (event) {
-            event.preventDefault();
-        }
-        
+        if (event) event.preventDefault();
+
         const name = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
-        
-        console.log('🔧 Tentando cadastro:', name, email);
 
-        // Validações básicas
-        if (password !== confirmPassword) {
-            alert('As senhas não coincidem!');
-            return;
-        }
-
-        if (password.length < 6) {
-            alert('A senha deve ter pelo menos 6 caracteres!');
-            return;
-        }
+        if (password !== confirmPassword) { alert('As senhas não coincidem!'); return; }
+        if (password.length < 6) { alert('A senha deve ter pelo menos 6 caracteres!'); return; }
 
         try {
-            if (!window.API || !window.API.register) {
-                throw new Error('API não está carregada corretamente. Verifique o console.');
-            }
+            if (!window.API?.register) throw new Error('API não carregada corretamente');
 
-            console.log('🔧 Enviando requisição para:', window.API.BASE_URL + '/auth/register');
-            
             const result = await window.API.register(name, email, password);
             console.log('✅ Cadastro bem-sucedido:', result);
-            
+
+            // ✅ Persistência
+            localStorage.setItem('jwt_token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
+            this.currentUser = result.user;
+
             alert('Cadastro realizado com sucesso!');
-            
-            // ✅ CORREÇÃO: Mostrar aplicativo primeiro
-            if (window.UI) {
-                window.UI.showAppContent();
-            } else {
-                const loginScreen = document.getElementById('loginScreen');
-                const registerScreen = document.getElementById('registerScreen');
-                const appContent = document.getElementById('appContent');
-                if (loginScreen && registerScreen && appContent) {
-                    loginScreen.classList.add('hidden');
-                    registerScreen.classList.add('hidden');
-                    appContent.classList.remove('hidden');
-                }
+
+            // Mostrar app
+            if (window.UI?.showAppContent) window.UI.showAppContent();
+            else {
+                document.getElementById('loginScreen')?.classList.add('hidden');
+                document.getElementById('registerScreen')?.classList.add('hidden');
+                document.getElementById('appContent')?.classList.remove('hidden');
             }
-            
-            // ✅ CORREÇÃO: Carregar veículos depois
+
+            // Carregar veículos depois
             setTimeout(async () => {
-                try {
-                    if (window.Vehicles && window.Vehicles.loadVehicles) {
-                        await window.Vehicles.loadVehicles();
-                    } else {
-                        console.error('Vehicles não disponível');
-                    }
-                } catch (vehicleError) {
-                    console.error('Erro ao carregar veículos:', vehicleError);
-                }
+                try { await window.Vehicles?.loadVehicles(); }
+                catch (e) { console.error('Erro ao carregar veículos:', e); }
             }, 100);
-            
+
         } catch (error) {
             console.error('❌ Erro no cadastro:', error);
             alert('Erro no cadastro: ' + error.message);
         }
     }
 
-    // Processar logout
+    // Logout
     static handleLogout() {
         if (confirm('Tem certeza que deseja sair?')) {
-            if (window.API) {
-                window.API.logout();
-            }
-            if (window.UI) {
-                window.UI.showLoginScreen();
-            }
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('user');
+            this.currentUser = null;
+            window.API?.logout();
+            window.UI?.showLoginScreen();
             alert('Logout realizado!');
         }
     }
@@ -159,7 +115,6 @@ class Auth {
     // Obter dados do usuário atual
     static getUserData() {
         if (!this.currentUser) return null;
-        
         return {
             vehicles: [],
             services: [],
@@ -167,26 +122,11 @@ class Auth {
         };
     }
 
-    // Salvar dados do usuário (para compatibilidade)
-    static saveUserData(data) {
-        console.log('💾 Salvando dados (simulado para API):', data);
-    }
-
-    // Inicializar dados do usuário (para compatibilidade)
-    static initializeUserData() {
-        console.log('🔧 Inicializando dados do usuário');
-    }
+    static saveUserData(data) { console.log('💾 Salvando dados (simulado):', data); }
+    static initializeUserData() { console.log('🔧 Inicializando dados do usuário'); }
 }
 
-// Verificação de módulos
-console.log('🔍 Verificando módulos carregados:');
-console.log('- Auth:', !!window.Auth);
-console.log('- UI:', !!window.UI);
-console.log('- Vehicles:', !!window.Vehicles);
-console.log('- API:', !!window.API);
-console.log('- App:', !!window.App);
-
-// Função global para debug
+// Debug
 window.debugAuth = () => {
     console.log('🔍 DEBUG AUTH:');
     console.log('- Token:', localStorage.getItem('jwt_token'));
@@ -194,6 +134,6 @@ window.debugAuth = () => {
     console.log('- CurrentUser:', Auth.currentUser);
 };
 
-// Tornar global
+// Global
 window.Auth = Auth;
-console.log('✅ Auth carregado - VERSÃO CORRIGIDA');
+console.log('✅ Auth carregado - VERSÃO FINAL');
