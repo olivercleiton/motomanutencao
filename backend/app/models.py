@@ -30,6 +30,18 @@ class Vehicle(db.Model):
     services = db.relationship('Service', backref='vehicle', lazy=True, cascade='all, delete-orphan')
     maintenance_configs = db.relationship('MaintenanceConfig', backref='vehicle', lazy=True, cascade='all, delete-orphan')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'model': self.model,
+            'year': self.year,
+            'plate': self.plate,
+            'current_mileage': self.current_mileage,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
