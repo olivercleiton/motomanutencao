@@ -29,7 +29,7 @@ class User(db.Model):
         return f'<User {self.username}>'
 
 # Criar tabelas na primeira requisição
-@app.before_first_request
+@app.before_first_request # comente
 def create_tables():
     db.create_all()
 
@@ -60,6 +60,10 @@ def get_users():
         "username": user.username,
         "email": user.email
     } for user in users])
+
+# Criar tabelas ao inicializar
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
     app.run(debug=True)
