@@ -1,22 +1,33 @@
-// stats.js - versão CORRIGIDA com tratamento completo de dados undefined
+// stats.js - VERSÃO FINAL SEGURA E COMENTADA
 class Stats {
+    // 🟢 Referência global para o gráfico de custos
     static costChart = null;
 
+    // 📊 Carrega estatísticas de um veículo específico
     static async loadStatistics(vehicleId) {
         try {
             console.log('📊 Carregando estatísticas para veículo:', vehicleId);
+
+            // 🔹 Chamada segura à API
             const stats = await window.API.getVehicleStats(vehicleId);
-            console.log('✅ Estatísticas carregadas:', stats);
-            this.updateStatistics(stats);
+
+            // ⚠️ Verifica se a resposta é válida
+            if (!stats || typeof stats !== 'object') {
+                console.warn('⚠ Dados inválidos recebidos do backend, usando padrão.');
+                this.updateStatistics({});
+            } else {
+                this.updateStatistics(stats);
+            }
+
         } catch (error) {
+            // ❌ Caso a requisição falhe, mostra dados padrão
             console.error('❌ Erro ao carregar estatísticas:', error);
-            
-            // Mostrar estatísticas vazias em caso de erro
             this.updateStatistics({});
             this.showNotification('Erro ao carregar estatísticas. Mostrando dados padrão.', 'warning');
         }
     }
 
+    // 🎨 Inicializa o gráfico de custos
     static initializeChart() {
         const ctx = document.getElementById('costChart')?.getContext('2d');
         if (!ctx) {
@@ -24,11 +35,10 @@ class Stats {
             return;
         }
 
-        // Destruir gráfico existente se houver
-        if (this.costChart) {
-            this.costChart.destroy();
-        }
+        // 🔄 Destrói gráfico antigo, se existir
+        if (this.costChart) this.costChart.destroy();
 
+        // 🟢 Cria novo gráfico
         this.costChart = new Chart(ctx, {
             type: 'doughnut',
             data: { 
@@ -55,6 +65,7 @@ class Stats {
                         callbacks: { 
                             label: (ctx) => {
                                 const value = ctx.parsed ?? 0;
+                                // 🔒 Use safeToFixed para evitar erro de undefined
                                 return `R$ ${this.safeToFixed(value)}`;
                             }
                         } 
@@ -62,131 +73,100 @@ class Stats {
                 } 
             }
         });
-        
         console.log('📈 Gráfico inicializado');
     }
 
+    // 🔄 Atualiza a página com os dados recebidos
     static updateStatistics(stats = {}) {
         console.log('🔄 Atualizando estatísticas com dados:', stats);
-    
-        // ✅ CORREÇÃO: Garantir que todos os campos existem
+
+        // ✅ Garante que todos os campos numéricos têm valores válidos
         const statsCompletos = {
-            current_mileage: stats.total_mileage || stats.current_mileage || 0,
-            total_services: stats.total_services || 0,
-            total_cost: stats.total_cost || 0,
-            monthly_average: stats.monthly_average || 0,
-            next_maintenance: stats.next_maintenance || 0,
+            current_mileage: Number(stats.total_mileage || stats.current_mileage) || 0,
+            total_services: Number(stats.total_services) || 0,
+            total_cost: Number(stats.total_cost) || 0,
+            monthly_average: Number(stats.monthly_average) || 0,
+            next_maintenance: Number(stats.next_maintenance) || 0,
             cost_by_category: stats.cost_by_category || this.calcularCostByCategoryFallback(stats)
         };
 
         console.log('🛡️ Estatísticas completadas:', statsCompletos);
 
         try {
+            // ⚡ Atualiza DOM com valores seguros
             const totalMileage = document.getElementById('totalMileage');
-            if (totalMileage) {
-                totalMileage.textContent = this.formatNumber(this.safeNumber(statsCompletos.current_mileage));
-            }
+            if (totalMileage) totalMileage.textContent = this.formatNumber(statsCompletos.current_mileage);
 
             const totalServices = document.getElementById('totalServices');
-            if (totalServices) {
-                totalServices.textContent = this.formatNumber(this.safeNumber(statsCompletos.total_services));
-            }
+            if (totalServices) totalServices.textContent = this.formatNumber(statsCompletos.total_services);
 
             const totalCost = document.getElementById('totalCost');
-            if (totalCost) {
-                totalCost.textContent = `R$ ${this.safeToFixed(statsCompletos.total_cost)}`;
-            }
+            if (totalCost) totalCost.textContent = `R$ ${this.safeToFixed(statsCompletos.total_cost)}`;
 
             const monthlyAverage = document.getElementById('monthlyAverage');
-            if (monthlyAverage) {
-                monthlyAverage.textContent = `R$ ${this.safeToFixed(statsCompletos.monthly_average)}`;
-            }
+            if (monthlyAverage) monthlyAverage.textContent = `R$ ${this.safeToFixed(statsCompletos.monthly_average)}`;
 
             const nextMaintenance = document.getElementById('nextMaintenance');
             if (nextMaintenance) {
-                const nextMaint = this.safeNumber(statsCompletos.next_maintenance);
-                nextMaintenance.textContent = nextMaint > 0 ? 
-                    `${this.formatNumber(nextMaint)} km` : 'Em dia';
+                const nextMaint = statsCompletos.next_maintenance;
+                nextMaintenance.textContent = nextMaint > 0 ? `${this.formatNumber(nextMaint)} km` : 'Em dia';
             }
 
-            // ✅ CORREÇÃO: Usar estatísticas completadas
+            // 🟢 Atualiza gráfico com segurança
             this.updateChart(statsCompletos.cost_by_category);
             console.log('✅ Estatísticas atualizadas com segurança');
 
         } catch (error) {
+            // ❌ Captura qualquer erro de renderização
             console.error('❌ Erro ao atualizar estatísticas:', error);
             this.showNotification('Erro ao exibir estatísticas.', 'error');
         }
     }
 
-    // ✅ CORREÇÃO: Método seguro para toFixed
+    // 🔒 Método seguro para toFixed
     static safeToFixed(value, decimals = 2) {
-        if (value === undefined || value === null || isNaN(value)) {
-            return '0'.padEnd(decimals + 2, '0');
-        }
-        const num = Number(value);
-        return num.toFixed(decimals);
+        if (value === undefined || value === null || isNaN(value)) return (0).toFixed(decimals);
+        return Number(value).toFixed(decimals);
     }
 
-    // ✅ CORREÇÃO: Método seguro para números
+    // 🔒 Método seguro para conversão de número
     static safeNumber(value, defaultValue = 0) {
-        if (value === undefined || value === null || isNaN(value)) {
-            return defaultValue;
-        }
+        if (value === undefined || value === null || isNaN(value)) return defaultValue;
         return Number(value);
     }
 
-    // ✅ NOVO MÉTODO: Calcular cost_by_category quando backend não fornecer
+    // 🌐 Formata número para pt-BR
+    static formatNumber(number) {
+        return new Intl.NumberFormat('pt-BR').format(this.safeNumber(number));
+    }
+
+    // 🔄 Calcula cost_by_category se backend não fornecer
     static calcularCostByCategoryFallback(stats) {
         console.log('🔄 Calculando cost_by_category fallback...');
-    
-        // Se não há serviços, retornar objeto vazio
-        if (!stats.total_services || stats.total_services === 0) {
-            console.log('📊 Nenhum serviço registrado - gráfico vazio');
-            return {};
-        }
-    
-        // ✅ Aqui você poderia buscar os serviços reais para calcular
-        // Por enquanto, retornar dados de exemplo baseados no total_cost
+        if (!stats.total_services || stats.total_services === 0) return {};
+
         const categorias = ['Troca de óleo', 'Pneus', 'Freios', 'Correia', 'Revisão'];
         const custoPorCategoria = {};
-        
-        if (stats.total_cost > 0) {
-            // Distribuir o custo total entre categorias (exemplo)
-            categorias.forEach((categoria, index) => {
-                custoPorCategoria[categoria] = Math.round(stats.total_cost / categorias.length);
-            });
-            console.log('📈 Custos distribuídos:', custoPorCategoria);
-        } else {
-            console.log('💰 Custo total zero - sem dados para gráfico');
-        }
-        
+        categorias.forEach(c => { custoPorCategoria[c] = Math.round(stats.total_cost / categorias.length); });
         return custoPorCategoria;
     }
 
+    // 📊 Atualiza o gráfico com dados seguros
     static updateChart(costByCategory = {}) {
-        if (!this.costChart) {
-            this.initializeChart();
-        }
-        if (!this.costChart) {
-            console.error('❌ Não foi possível inicializar o gráfico');
-            return;
-        }
+        if (!this.costChart) this.initializeChart();
+        if (!this.costChart) return console.error('❌ Não foi possível inicializar o gráfico');
 
-        // ✅ CORRIGIDO: Garantir que temos arrays válidos
         const labels = Object.keys(costByCategory);
-        const data = Object.values(costByCategory).map(value => this.safeNumber(value, 0));
+        const data = Object.values(costByCategory).map(v => this.safeNumber(v, 0));
 
-        // ✅ CORRIGIDO: Se não houver dados, mostrar mensagem
-        if (labels.length === 0 || data.every(val => val === 0)) {
+        // Se não houver dados, mostra gráfico padrão
+        if (labels.length === 0 || data.every(v => v === 0)) {
             this.costChart.data.labels = ['Sem dados'];
             this.costChart.data.datasets[0].data = [1];
             this.costChart.data.datasets[0].backgroundColor = ['rgba(200,200,200,0.5)'];
-            console.log('📊 Gráfico: Mostrando dados padrão (sem dados reais)');
         } else {
             this.costChart.data.labels = labels;
             this.costChart.data.datasets[0].data = data;
-            // Resetar cores para dados reais
             this.costChart.data.datasets[0].backgroundColor = window.APP_CONFIG?.chartColors || [
                 'rgba(0,100,0,0.7)',
                 'rgba(255,140,0,0.7)',
@@ -201,46 +181,27 @@ class Stats {
         console.log('📈 Gráfico atualizado:', { labels, data });
     }
 
-    // ✅ CORRIGIDO: Função auxiliar para números seguros
-    static formatNumber(number) {
-        const num = this.safeNumber(number);
-        return new Intl.NumberFormat('pt-BR').format(num);
-    }
-
+    // 🔔 Mostra notificações de erro ou alerta
     static showNotification(message, type = 'info') {
         console.log(`${type.toUpperCase()}: ${message}`);
-        // Melhorar para notificação não intrusiva no futuro
         if (type === 'error' || type === 'warning') {
-            // Usar sistema de notificação do UI se disponível
-            if (window.UI && window.UI.showNotification) {
-                window.UI.showNotification(message, type);
-            } else {
-                alert(`${type.toUpperCase()}: ${message}`);
-            }
+            if (window.UI && window.UI.showNotification) window.UI.showNotification(message, type);
+            else alert(`${type.toUpperCase()}: ${message}`);
         }
     }
 
-    // ✅ NOVO: Método para limpar estatísticas quando não há veículo selecionado
+    // 🧹 Limpa todas as estatísticas do DOM e gráfico
     static clearStatistics() {
         console.log('🔄 Limpando estatísticas...');
-        
-        const elements = [
-            'totalMileage', 'totalServices', 'totalCost', 
-            'monthlyAverage', 'nextMaintenance'
-        ];
-        
-        elements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = '0';
-            }
+        ['totalMileage','totalServices','totalCost','monthlyAverage','nextMaintenance'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0';
         });
-        
         this.updateChart({});
         console.log('✅ Estatísticas limpas');
     }
 }
 
-// Global
+// 🌐 Disponibiliza globalmente
 window.Stats = Stats;
-console.log('✅ Stats carregado - VERSÃO CORRIGIDA COM SEGURANÇA');
+console.log('✅ Stats carregado - VERSÃO FINAL SEGURA');
