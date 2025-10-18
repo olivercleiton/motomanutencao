@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -7,8 +7,20 @@ from flask_cors import CORS
 # Configuração do app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'motomanutencao-secret-key-2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///motomanutencao.db')
+
+# Configuração do banco - FORÇAR pg8000
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Se tiver DATABASE_URL, forçar uso do pg8000
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
+    elif DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
+    
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL or 'sqlite:///motomanutencao.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 app.config['JWT_SECRET_KEY'] = 'jwt-secret-key-2024'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 
@@ -17,19 +29,10 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
 
-# COMENTE ou REMOVA estas linhas problemáticas:
-# from app.auth import bp as auth_bp
-# from app.routes import bp as main_bp
-# app.register_blueprint(auth_bp)
-# app.register_blueprint(main_bp)
-
-# COMENTE esta também:
-# from app import models
-
-# Adicione uma rota básica para teste
+# Rotas básicas
 @app.route('/')
 def home():
-    return {"message": "API Motomanutencao Online! 🚀"}
+    return {"message": "API Motomanutencao Online! 🚀", "database": "PostgreSQL" if DATABASE_URL else "SQLite"}
 
 @app.route('/health')
 def health():
@@ -42,10 +45,9 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     print("🚀 Servidor Flask iniciando...")
-    print("📊 Banco de dados:", "PostgreSQL" if os.environ.get('DATABASE_URL') else "SQLite")
+    print("📊 Banco de dados:", "PostgreSQL" if DATABASE_URL else "SQLite")
     print("🔗 Porta:", port)
     print("🌐 Host: 0.0.0.0")
     print("⏹️  Pressione Ctrl+C para parar o servidor")
     
-    # LINHA CORRIGIDA - ESSENCIAL PARA RENDER:
     app.run(host='0.0.0.0', port=port, debug=False)
