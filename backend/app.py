@@ -28,10 +28,6 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-# Criar tabelas na primeira requisição
-@app.before_first_request # comente
-def create_tables():
-    db.create_all()
 
 # Suas rotas existentes
 @app.route('/')
