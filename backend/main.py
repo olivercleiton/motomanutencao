@@ -52,6 +52,41 @@ def get_users():
 # Criar tabelas
 with app.app_context():
     db.create_all()
+# Rotas de autenticação placeholder para o frontend
+@app.route('/api/login', methods=['POST'])
+def login():
+    return jsonify({
+        "success": True,
+        "token": "placeholder-jwt-token",
+        "user": {
+            "id": 1,
+            "username": "admin", 
+            "email": "admin@example.com"
+        }
+    })
+
+@app.route('/api/check-auth', methods=['GET'])
+def check_auth():
+    return jsonify({
+        "authenticated": True,
+        "user": {
+            "id": 1,
+            "username": "admin",
+            "email": "admin@example.com"
+        }
+    })
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    return jsonify({"success": True})
+
+# Rota para criar usuário (se o frontend precisar)
+@app.route('/api/register', methods=['POST'])
+def register():
+    return jsonify({
+        "success": True,
+        "message": "Usuário criado com sucesso"
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
