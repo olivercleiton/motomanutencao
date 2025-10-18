@@ -17,9 +17,9 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
 
-# Importar e registrar blueprints
-from backend.app.auth import bp as auth_bp
-from backend.app.routes import bp as main_bp
+# Importar e registrar blueprints - CORRETO PARA RENDER
+from app.auth import bp as auth_bp
+from app.routes import bp as main_bp
 app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 
