@@ -1,10 +1,12 @@
 services:
   - type: web
-    name: motomanutencao
+    name: motomanutencao-api
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn start_server:app
+    startCommand: cd backend && gunicorn app:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: motomanutencao-db
+          property: connectionString
