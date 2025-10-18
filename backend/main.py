@@ -17,14 +17,23 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
 
-# Importar e registrar blueprints - CORRETO PARA RENDER
-from app.auth import bp as auth_bp
-from app.routes import bp as main_bp
-app.register_blueprint(auth_bp)
-app.register_blueprint(main_bp)
+# COMENTE ou REMOVA estas linhas problemáticas:
+# from app.auth import bp as auth_bp
+# from app.routes import bp as main_bp
+# app.register_blueprint(auth_bp)
+# app.register_blueprint(main_bp)
 
-# Importar modelos
-from app import models
+# COMENTE esta também:
+# from app import models
+
+# Adicione uma rota básica para teste
+@app.route('/')
+def home():
+    return {"message": "API Motomanutencao Online! 🚀"}
+
+@app.route('/health')
+def health():
+    return {"status": "OK", "message": "Servidor funcionando"}
 
 # Criar tabelas
 with app.app_context():
