@@ -1,3 +1,5 @@
+# Configuração do banco - SQLITE (sempre)
+# Ignora completamente o PostgreSQL por enquanto
 import os
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -8,17 +10,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'motomanutencao-secret-key-2024'
 
-# Configuração do banco - FORÇAR pg8000
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    # Se tiver DATABASE_URL, forçar uso do pg8000
-    if DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
-    elif DATABASE_URL.startswith("postgresql://"):
-        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
-    
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL or 'sqlite:///motomanutencao.db'
+# ✅ SQLITE - SEMPRE (ignora DATABASE_URL)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///motomanutencao.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['JWT_SECRET_KEY'] = 'jwt-secret-key-2024'
@@ -29,14 +22,32 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
 
+# Modelo User simples
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
+
 # Rotas básicas
 @app.route('/')
 def home():
-    return {"message": "API Motomanutencao Online! 🚀", "database": "PostgreSQL" if DATABASE_URL else "SQLite"}
+    return {"message": "API Motomanutencao Online! 🚀", "database": "SQLite"}
 
 @app.route('/health')
 def health():
     return {"status": "OK", "message": "Servidor funcionando"}
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return jsonify([{
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    } for user in users])
 
 # Criar tabelas
 with app.app_context():
@@ -45,7 +56,7 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     print("🚀 Servidor Flask iniciando...")
-    print("📊 Banco de dados:", "PostgreSQL" if DATABASE_URL else "SQLite")
+    print("📊 Banco de dados: SQLite")
     print("🔗 Porta:", port)
     print("🌐 Host: 0.0.0.0")
     print("⏹️  Pressione Ctrl+C para parar o servidor")
