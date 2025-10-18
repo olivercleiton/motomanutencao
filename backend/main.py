@@ -40,8 +40,12 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
     print("🚀 Servidor Flask iniciando...")
     print("📊 Banco de dados:", "PostgreSQL" if os.environ.get('DATABASE_URL') else "SQLite")
-    print("🔗 API disponível em: http://localhost:5000")
+    print("🔗 Porta:", port)
+    print("🌐 Host: 0.0.0.0")
     print("⏹️  Pressione Ctrl+C para parar o servidor")
-    app.run(debug=True, port=5000)
+    
+    # LINHA CORRIGIDA - ESSENCIAL PARA RENDER:
+    app.run(host='0.0.0.0', port=port, debug=False)
