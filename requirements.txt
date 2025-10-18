@@ -1,7 +1,7 @@
-"Flask==2.3.3" 
-"flask-cors==4.0.0" 
-"pg8000==1.30.4" 
-"Flask-SQLAlchemy==3.0.5" 
-"python-dotenv==1.0.0" 
-"werkzeug==2.3.7" 
-"Flask-JWT-Extended==4.5.3" 
+Flask==2.3.3 
+flask-cors==4.0.0 
+pg8000==1.30.4
+Flask-SQLAlchemy==3.0.5 
+python-dotenv==1.0.0
+werkzeug==2.3.7 
+Flask-JWT-Extended==4.5.3 
