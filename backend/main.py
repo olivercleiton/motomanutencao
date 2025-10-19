@@ -116,24 +116,13 @@ def check_auth():
 def logout():
     return jsonify({"success": True})
 
-# Rota para criar usuário (se o frontend precisar)
+# Rota para criar usuário (se o frontend precisar) - MANTENHA APENAS ESTA
 @app.route('/api/register', methods=['POST'])
-def register():
+def register_user():  # MUDEI o nome para evitar duplicação
     return jsonify({
         "success": True,
         "message": "Usuário criado com sucesso"
     })
-
-# ... código existente ...
-
-@app.route('/api/register', methods=['POST'])
-def register():
-    return jsonify({
-        "success": True,
-        "message": "Usuário criado com sucesso"
-    })
-
-# 🔥 🔥 🔥 ADICIONE AQUI AS NOVAS ROTAS DE VEÍCULOS 🔥 🔥 🔥
 
 # 🔥 ROTAS DE VEÍCULOS QUE O FRONTEND PRECISA:
 @app.route('/api/vehicles', methods=['GET'])
@@ -189,14 +178,7 @@ def delete_vehicle(vehicle_id):
         "message": f"Veículo {vehicle_id} excluído com sucesso!"
     })
 
-# 🔥 🔥 🔥 FIM DAS NOVAS ROTAS 🔥 🔥 🔥
-
-# Criar tabelas
-with app.app_context():
-    db.create_all()
-
-# ... resto do código ...
-# Criar tabelas
+# Criar tabelas (APENAS UMA VEZ)
 with app.app_context():
     db.create_all()
 
