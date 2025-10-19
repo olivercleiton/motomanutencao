@@ -124,52 +124,54 @@ def register_user():  # MUDEI o nome para evitar duplicação
         "message": "Usuário criado com sucesso"
     })
 
-# 🔥 ROTAS DE VEÍCULOS QUE O FRONTEND PRECISA:
+# 🔥 ROTAS DE VEÍCULOS CORRIGIDAS - FORMATO QUE O FRONTEND ESPERA:
 @app.route('/api/vehicles', methods=['GET'])
 def get_vehicles():
-    return jsonify({
-        "success": True,
-        "vehicles": [
-            {
-                "id": 1,
-                "name": "Honda CB 500",
-                "model": "CB 500",
-                "year": 2020,
-                "plate": "ABC-1234",
-                "color": "Vermelho"
-            },
-            {
-                "id": 2, 
-                "name": "Yamaha MT-07",
-                "model": "MT-07",
-                "year": 2021,
-                "plate": "XYZ-5678",
-                "color": "Azul"
-            }
-        ]
-    })
+    vehicles = [
+        {
+            "id": 1,
+            "name": "Honda CB 500",
+            "model": "CB 500", 
+            "year": 2020,
+            "plate": "ABC-1234",
+            "color": "Vermelho"
+        },
+        {
+            "id": 2,
+            "name": "Yamaha MT-07",
+            "model": "MT-07",
+            "year": 2021,
+            "plate": "XYZ-5678", 
+            "color": "Azul"
+        }
+    ]
+    return jsonify(vehicles)  # 🔥 MUDEI: retorna array direto, não objeto com "vehicles"
 
 @app.route('/api/vehicles', methods=['POST'])
 def add_vehicle():
-    return jsonify({
-        "success": True,
-        "message": "Veículo adicionado com sucesso!",
-        "vehicle": {
-            "id": 3,
-            "name": "Novo Veículo",
-            "model": "Modelo X",
-            "year": 2023,
-            "plate": "NEW-9999",
-            "color": "Preto"
-        }
-    })
+    # Simula a criação de um veículo
+    new_vehicle = {
+        "id": 3,
+        "name": request.json.get('name', 'Novo Veículo'),
+        "model": request.json.get('model', 'Modelo X'),
+        "year": request.json.get('year', 2023),
+        "plate": request.json.get('plate', 'NEW-9999'),
+        "color": request.json.get('color', 'Preto')
+    }
+    return jsonify(new_vehicle)  # 🔥 MUDEI: retorna o veículo direto
 
 @app.route('/api/vehicles/<int:vehicle_id>', methods=['PUT'])
 def update_vehicle(vehicle_id):
-    return jsonify({
-        "success": True,
-        "message": f"Veículo {vehicle_id} atualizado com sucesso!"
-    })
+    # Simula atualização
+    updated_vehicle = {
+        "id": vehicle_id,
+        "name": request.json.get('name', 'Veículo Atualizado'),
+        "model": request.json.get('model', 'Modelo Atualizado'),
+        "year": request.json.get('year', 2023),
+        "plate": request.json.get('plate', 'UPD-9999'),
+        "color": request.json.get('color', 'Atualizado')
+    }
+    return jsonify(updated_vehicle)
 
 @app.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
 def delete_vehicle(vehicle_id):
@@ -177,7 +179,6 @@ def delete_vehicle(vehicle_id):
         "success": True,
         "message": f"Veículo {vehicle_id} excluído com sucesso!"
     })
-
 # Criar tabelas (APENAS UMA VEZ)
 with app.app_context():
     db.create_all()
