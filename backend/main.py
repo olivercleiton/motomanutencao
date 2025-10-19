@@ -124,6 +124,78 @@ def register():
         "message": "Usuário criado com sucesso"
     })
 
+# ... código existente ...
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    return jsonify({
+        "success": True,
+        "message": "Usuário criado com sucesso"
+    })
+
+# 🔥 🔥 🔥 ADICIONE AQUI AS NOVAS ROTAS DE VEÍCULOS 🔥 🔥 🔥
+
+# 🔥 ROTAS DE VEÍCULOS QUE O FRONTEND PRECISA:
+@app.route('/api/vehicles', methods=['GET'])
+def get_vehicles():
+    return jsonify({
+        "success": True,
+        "vehicles": [
+            {
+                "id": 1,
+                "name": "Honda CB 500",
+                "model": "CB 500",
+                "year": 2020,
+                "plate": "ABC-1234",
+                "color": "Vermelho"
+            },
+            {
+                "id": 2, 
+                "name": "Yamaha MT-07",
+                "model": "MT-07",
+                "year": 2021,
+                "plate": "XYZ-5678",
+                "color": "Azul"
+            }
+        ]
+    })
+
+@app.route('/api/vehicles', methods=['POST'])
+def add_vehicle():
+    return jsonify({
+        "success": True,
+        "message": "Veículo adicionado com sucesso!",
+        "vehicle": {
+            "id": 3,
+            "name": "Novo Veículo",
+            "model": "Modelo X",
+            "year": 2023,
+            "plate": "NEW-9999",
+            "color": "Preto"
+        }
+    })
+
+@app.route('/api/vehicles/<int:vehicle_id>', methods=['PUT'])
+def update_vehicle(vehicle_id):
+    return jsonify({
+        "success": True,
+        "message": f"Veículo {vehicle_id} atualizado com sucesso!"
+    })
+
+@app.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
+def delete_vehicle(vehicle_id):
+    return jsonify({
+        "success": True,
+        "message": f"Veículo {vehicle_id} excluído com sucesso!"
+    })
+
+# 🔥 🔥 🔥 FIM DAS NOVAS ROTAS 🔥 🔥 🔥
+
+# Criar tabelas
+with app.app_context():
+    db.create_all()
+
+# ... resto do código ...
 # Criar tabelas
 with app.app_context():
     db.create_all()
