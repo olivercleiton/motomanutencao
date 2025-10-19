@@ -1,7 +1,7 @@
 # Configuração do banco - SQLITE (sempre)
 # Ignora completamente o PostgreSQL por enquanto
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -49,9 +49,45 @@ def get_users():
         "email": user.email
     } for user in users])
 
-# Criar tabelas
-with app.app_context():
-    db.create_all()
+# 🔥 ROTAS ESPECÍFICAS QUE O FRONTEND PRECISA:
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    return jsonify({
+        "success": True,
+        "token": "jwt-token-placeholder-12345",
+        "user": {
+            "id": 1,
+            "username": "olivercleiton",
+            "email": "olivercleiton@gmail.com",
+            "name": "Cleiton Rodrigues"
+        }
+    })
+
+@app.route('/api/auth/register', methods=['POST'])
+def auth_register():
+    return jsonify({
+        "success": True,
+        "message": "Usuário cadastrado com sucesso!",
+        "user": {
+            "id": 2,
+            "username": "novousuario", 
+            "email": "novo@email.com",
+            "name": "Novo Usuário"
+        }
+    })
+
+@app.route('/api/auth/check', methods=['GET'])
+def auth_check():
+    return jsonify({
+        "authenticated": True,
+        "user": {
+            "id": 1,
+            "username": "olivercleiton",
+            "email": "olivercleiton@gmail.com",
+            "name": "Cleiton Rodrigues"
+        }
+    })
+
 # Rotas de autenticação placeholder para o frontend
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -87,6 +123,10 @@ def register():
         "success": True,
         "message": "Usuário criado com sucesso"
     })
+
+# Criar tabelas
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
