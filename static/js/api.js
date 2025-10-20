@@ -264,27 +264,27 @@ class API {
         });
     }
 
-    // ✅ Maintenance config methods
+    // api.js - APENAS A FUNÇÃO getMaintenanceConfig CORRIGIDA
     async getMaintenanceConfig(vehicleId) {
-        const configs = await this.request(`/vehicles/${vehicleId}/maintenance-config`);
-        // Converter array para objeto
-        const configObj = {};
-        configs.forEach(config => {
-            configObj[config.service_type] = config.interval_km;
-        });
-        return configObj;
+    try {
+        const response = await this.request(`/vehicles/${vehicleId}/maintenance-config`);
+        
+        // ✅ CORREÇÃO: Retornar objeto diretamente
+        if (response && typeof response === 'object') {
+            return response.config || response;
+        }
+        return {};
+    } catch (error) {
+        console.error('❌ Erro ao carregar configurações:', error);
+        return {};
+    }
     }
 
     async updateMaintenanceConfig(vehicleId, configs) {
-        // Converter objeto para array
-        const configArray = Object.keys(configs).map(service_type => ({
-            service_type,
-            interval_km: configs[service_type]
-        }));
-        
+        // ✅ CORREÇÃO: Enviar como objeto simples, não array
         return await this.request(`/vehicles/${vehicleId}/maintenance-config`, {
-            method: 'POST',
-            body: JSON.stringify({ configs: configArray })
+            method: 'PUT',
+            body: JSON.stringify(configs)
         });
     }
 

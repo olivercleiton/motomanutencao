@@ -1,4 +1,4 @@
-// Gerenciamento de veículos - VERSÃO CORRIGIDA (NÃO-BLOQUEANTE)
+// Gerenciamento de veículos - VERSÃO COMPLETAMENTE CORRIGIDA
 class Vehicles {
     static currentVehicle = null;
     static vehicles = [];
@@ -8,21 +8,42 @@ class Vehicles {
         return !!(window.Vehicles && window.Vehicles.loadVehicles);
     }
 
+    // ✅ CORREÇÃO: Inicialização segura
+    static initialize() {
+        if (!Array.isArray(this.vehicles)) {
+            this.vehicles = [];
+        }
+        console.log('🚗 Vehicles inicializado - Array garantido');
+    }
+
     // Carregar veículos - VERSÃO CORRIGIDA (não-bloqueante)
     static async loadVehicles() {
         try {
             console.log('🚗 Carregando veículos...');
-            this.vehicles = await window.API.getVehicles();
+            const response = await window.API.getVehicles();
+            
+            // ✅ CORREÇÃO MELHORADA: Tratamento robusto da resposta
+            if (Array.isArray(response)) {
+                this.vehicles = response;
+            } else if (response && response.success && Array.isArray(response.vehicles)) {
+                this.vehicles = response.vehicles;
+            } else if (response && Array.isArray(response.data)) {
+                this.vehicles = response.data;
+            } else {
+                console.warn('⚠️ Formato de resposta inesperado, usando array vazio:', response);
+                this.vehicles = [];
+            }
+            
             console.log('✅ Veículos carregados:', this.vehicles);
             
-            // ✅ CORREÇÃO: Renderizar imediatamente (não-bloqueante)
+            // Renderizar imediatamente (não-bloqueante)
             this.renderVehicles();
             
             if (this.vehicles.length > 0) {
                 const savedVehicleId = localStorage.getItem('currentVehicle');
                 const vehicle = this.vehicles.find(v => v.id == savedVehicleId) || this.vehicles[0];
                 
-                // ✅ CORREÇÃO: Não usar await aqui
+                // Não usar await aqui para não bloquear
                 this.selectVehicle(vehicle);
             } else {
                 this.currentVehicle = null;
@@ -30,20 +51,40 @@ class Vehicles {
             }
         } catch (error) {
             console.error('❌ Erro ao carregar veículos:', error);
-            // ✅ CORREÇÃO: Não travar o app com alerta
+            // Não travar o app com alerta
             console.log('⚠️ Aplicativo continuará sem dados de veículos');
+            this.vehicles = []; // ✅ Garantir array vazio
             this.currentVehicle = null;
             this.renderVehicleInfo();
             this.renderVehicles(); // Renderiza mesmo com erro
         }
     }
 
-    // Adicionar novo veículo
+    // Adicionar novo veículo - VERSÃO CORRIGIDA
     static async addVehicle(vehicleData) {
         try {
             console.log('🚗 Adicionando veículo:', vehicleData);
-            const vehicle = await window.API.createVehicle(vehicleData);
+            const response = await window.API.createVehicle(vehicleData);
+            
+            // ✅ CORREÇÃO: Extrair veículo da resposta de forma robusta
+            let vehicle;
+            if (response && typeof response === 'object') {
+                vehicle = response.vehicle || response.data || response;
+            } else {
+                vehicle = response;
+            }
+            
             console.log('✅ Veículo criado:', vehicle);
+            
+            // ✅ CORREÇÃO: Garantir que vehicles seja array
+            if (!Array.isArray(this.vehicles)) {
+                this.vehicles = [];
+            }
+            
+            // ✅ CORREÇÃO: Garantir que o veículo tenha um ID
+            if (!vehicle.id) {
+                vehicle.id = Date.now(); // ID temporário
+            }
             
             this.vehicles.push(vehicle);
             this.renderVehicles();
@@ -59,14 +100,15 @@ class Vehicles {
 
     // Processar adição de veículo via formulário
     static async handleAddVehicle() {
-        const name = document.getElementById('vehicleName').value;
-        const model = document.getElementById('vehicleModel').value;
-        const year = parseInt(document.getElementById('vehicleYear').value);
-        const plate = document.getElementById('vehiclePlate').value;
-        const mileage = parseInt(document.getElementById('vehicleMileage').value);
+        const name = document.getElementById('vehicleName')?.value;
+        const model = document.getElementById('vehicleModel')?.value;
+        const year = parseInt(document.getElementById('vehicleYear')?.value);
+        const plate = document.getElementById('vehiclePlate')?.value;
+        const mileage = parseInt(document.getElementById('vehicleMileage')?.value);
         
         console.log('📝 Dados do formulário:', { name, model, year, plate, mileage });
         
+        // ✅ CORREÇÃO: Validação robusta
         if (!name || !model || !year || !mileage) {
             this.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
             return;
@@ -77,33 +119,52 @@ class Vehicles {
             return;
         }
         
+        if (mileage < 0) {
+            this.showNotification('Quilometragem não pode ser negativa.', 'error');
+            return;
+        }
+        
         await this.addVehicle({
-            name,
-            model,
+            name: name.trim(),
+            model: model.trim(),
             year,
-            plate,
+            plate: plate?.trim() || '',
             current_mileage: mileage
         });
         
         // Limpar formulário
-        document.getElementById('vehicleForm').reset();
+        const vehicleForm = document.getElementById('vehicleForm');
+        if (vehicleForm) {
+            vehicleForm.reset();
+        }
     }
 
-    // Atualizar veículo
+    // Atualizar veículo - VERSÃO CORRIGIDA
     static async updateVehicle(vehicleId, vehicleData) {
         try {
             console.log('🔄 Atualizando veículo:', vehicleId, vehicleData);
-            const vehicle = await window.API.updateVehicle(vehicleId, vehicleData);
+            const response = await window.API.updateVehicle(vehicleId, vehicleData);
+            
+            // ✅ CORREÇÃO: Extrair veículo da resposta de forma robusta
+            let vehicle;
+            if (response && typeof response === 'object') {
+                vehicle = response.vehicle || response.data || response;
+            } else {
+                vehicle = response;
+            }
+            
             const index = this.vehicles.findIndex(v => v.id === vehicleId);
+            
             if (index !== -1) {
-                this.vehicles[index] = vehicle;
+                this.vehicles[index] = { ...this.vehicles[index], ...vehicle };
             }
             
             if (this.currentVehicle && this.currentVehicle.id === vehicleId) {
-                this.currentVehicle = vehicle;
+                this.currentVehicle = { ...this.currentVehicle, ...vehicle };
                 this.renderVehicleInfo();
             }
             
+            this.renderVehicles();
             this.showNotification('Informações salvas com sucesso!', 'success');
         } catch (error) {
             console.error('❌ Erro ao atualizar veículo:', error);
@@ -111,11 +172,13 @@ class Vehicles {
         }
     }
 
-    // Excluir veículo
+    // Excluir veículo - VERSÃO CORRIGIDA
     static async deleteVehicle(vehicleId) {
         try {
             console.log('🗑️ Excluindo veículo:', vehicleId);
             await window.API.deleteVehicle(vehicleId);
+            
+            // ✅ CORREÇÃO: Remover veículo da lista
             this.vehicles = this.vehicles.filter(v => v.id !== vehicleId);
             this.renderVehicles();
             
@@ -124,6 +187,7 @@ class Vehicles {
             } else {
                 this.currentVehicle = null;
                 this.renderVehicleInfo();
+                localStorage.removeItem('currentVehicle');
             }
             
             this.hideModal('deleteVehicleModal');
@@ -138,17 +202,24 @@ class Vehicles {
     static async selectVehicle(vehicle) {
         console.log('🎯 Selecionando veículo:', vehicle);
         
-        // Se for ID, encontrar o veículo
+        // ✅ CORREÇÃO: Se for ID, encontrar o veículo de forma segura
         if (typeof vehicle === 'string' || typeof vehicle === 'number') {
             vehicle = this.vehicles.find(v => v.id == vehicle);
             if (!vehicle) {
                 console.error('❌ Veículo não encontrado:', vehicle);
+                this.showNotification('Veículo não encontrado', 'error');
                 return;
             }
         }
         
+        // ✅ CORREÇÃO: Validar se o veículo é válido
+        if (!vehicle || !vehicle.id) {
+            console.error('❌ Veículo inválido:', vehicle);
+            return;
+        }
+        
         this.currentVehicle = vehicle;
-        localStorage.setItem('currentVehicle', vehicle.id);
+        localStorage.setItem('currentVehicle', vehicle.id.toString());
         this.renderVehicles();
         this.renderVehicleInfo();
         
@@ -162,43 +233,61 @@ class Vehicles {
         }, 50);
     }
 
-    // Carregar dados relacionados ao veículo
+    // Carregar dados relacionados ao veículo - VERSÃO CORRIGIDA
     static async loadVehicleRelatedData(vehicleId) {
         try {
-            // Carregar serviços
-            if (window.Services) {
+            console.log('📦 Carregando dados relacionados para veículo:', vehicleId);
+            
+            // ✅ CORREÇÃO: Carregar serviços de forma segura
+            if (window.Services && typeof window.Services.loadServices === 'function') {
                 await window.Services.loadServices(vehicleId);
+            } else {
+                console.warn('⚠️ Módulo Services não disponível');
             }
             
-            // Carregar estatísticas
-            if (window.Stats) {
+            // ✅ CORREÇÃO: Carregar estatísticas de forma segura
+            if (window.Stats && typeof window.Stats.loadStatistics === 'function') {
                 await window.Stats.loadStatistics(vehicleId);
+            } else {
+                console.warn('⚠️ Módulo Stats não disponível');
             }
             
-            // Carregar e inicializar configurações
+            // ✅ CORREÇÃO: Carregar e inicializar configurações
             await this.initializeVehicleConfig(vehicleId);
             
-            // Atualizar alertas
-            if (window.UI) {
+            // ✅ CORREÇÃO: Atualizar alertas de forma segura
+            if (window.UI && typeof window.UI.updateMaintenanceAlerts === 'function') {
                 await window.UI.updateMaintenanceAlerts();
             }
+            
+            console.log('✅ Todos os dados relacionados carregados para veículo:', vehicleId);
             
         } catch (error) {
             console.error('❌ Erro ao carregar dados do veículo:', error);
         }
     }
 
-    // Inicializar configurações do veículo - VERSÃO SIMPLIFICADA
+    // Inicializar configurações do veículo - VERSÃO CORRIGIDA
     static async initializeVehicleConfig(vehicleId) {
         try {
             console.log('🔧 Inicializando configurações para veículo:', vehicleId);
             
-            // Verificar se já existem configurações
-            let config = await window.API.getMaintenanceConfig(vehicleId);
+            // ✅ CORREÇÃO: Verificar se já existem configurações de forma segura
+            let config = {};
+            
+            if (window.API && typeof window.API.getMaintenanceConfig === 'function') {
+                const response = await window.API.getMaintenanceConfig(vehicleId);
+                
+                // ✅ CORREÇÃO: Extrair config da resposta de forma robusta
+                if (response && typeof response === 'object') {
+                    config = response.config || response.data || response;
+                }
+            }
+            
             console.log('📋 Configurações existentes:', config);
             
-            // Se não existir, criar padrão
-            if (!config || Object.keys(config).length === 0) {
+            // ✅ CORREÇÃO: Se não existir ou estiver vazio, criar padrão
+            if (!config || typeof config !== 'object' || Object.keys(config).length === 0) {
                 console.log('🏗️ Criando configurações padrão...');
                 const defaultConfig = {
                     "Troca de óleo": 5000,
@@ -208,12 +297,14 @@ class Vehicles {
                     "Revisão geral": 10000
                 };
                 
-                await window.API.updateMaintenanceConfig(vehicleId, defaultConfig);
+                if (window.API && typeof window.API.updateMaintenanceConfig === 'function') {
+                    await window.API.updateMaintenanceConfig(vehicleId, defaultConfig);
+                }
                 config = defaultConfig;
                 console.log('✅ Configurações criadas:', config);
             }
             
-            // Atualizar configuração global
+            // ✅ CORREÇÃO: Atualizar configuração global de forma segura
             if (window.APP_CONFIG) {
                 window.APP_CONFIG.maintenanceIntervals = config;
             }
@@ -226,7 +317,7 @@ class Vehicles {
         }
     }
 
-    // Renderizar configurações na interface - VERSÃO SIMPLIFICADA
+    // Renderizar configurações na interface - VERSÃO CORRIGIDA
     static renderMaintenanceConfig() {
         const configContainer = document.getElementById('maintenanceConfig');
         if (!configContainer) {
@@ -239,16 +330,17 @@ class Vehicles {
         
         configContainer.innerHTML = '';
         
+        // ✅ CORREÇÃO: Iteração segura sobre as chaves do objeto
         Object.keys(config).forEach(type => {
             if (type === "Outro") return;
             
             const configItem = document.createElement('div');
             configItem.className = 'maintenance-config-item';
             configItem.innerHTML = `
-                <label class="form-label">${type} (a cada quantos km?)</label>
+                <label class="form-label">${this.escapeHtml(type)} (a cada quantos km?)</label>
                 <div class="input-group mb-3">
                     <input type="number" class="form-control maintenance-interval" 
-                           data-type="${type}" value="${config[type]}" min="0">
+                           data-type="${this.escapeHtml(type)}" value="${parseInt(config[type]) || 0}" min="0">
                     <span class="input-group-text">km</span>
                 </div>
             `;
@@ -259,22 +351,22 @@ class Vehicles {
         this.setupConfigSaveButton();
     }
 
-    // Configurar botão de salvar configurações
+    // Configurar botão de salvar configurações - VERSÃO CORRIGIDA
     static setupConfigSaveButton() {
         const saveButton = document.getElementById('saveMaintenanceConfig');
         if (saveButton) {
-            // Remover listeners antigos
-            const newSaveButton = saveButton.cloneNode(true);
-            saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+            // ✅ CORREÇÃO: Remover listeners antigos de forma segura
+            saveButton.replaceWith(saveButton.cloneNode(true));
+            const newSaveButton = document.getElementById('saveMaintenanceConfig');
             
-            // Adicionar novo listener
+            // ✅ CORREÇÃO: Adicionar novo listener
             newSaveButton.addEventListener('click', () => {
                 this.saveMaintenanceConfig();
             });
         }
     }
 
-    // Salvar configurações de manutenção - VERSÃO SIMPLIFICADA
+    // Salvar configurações de manutenção - VERSÃO CORRIGIDA
     static async saveMaintenanceConfig() {
         if (!this.currentVehicle) {
             this.showNotification('Nenhum veículo selecionado.', 'error');
@@ -285,25 +377,30 @@ class Vehicles {
             const inputs = document.querySelectorAll('.maintenance-interval');
             const newConfig = {};
             
+            // ✅ CORREÇÃO: Coleta segura dos valores
             inputs.forEach(input => {
                 const type = input.dataset.type;
                 const value = parseInt(input.value) || 0;
-                newConfig[type] = value;
+                if (type && value >= 0) {
+                    newConfig[type] = value;
+                }
             });
             
             console.log('💾 Salvando configurações:', newConfig);
             
-            await window.API.updateMaintenanceConfig(this.currentVehicle.id, newConfig);
+            if (window.API && typeof window.API.updateMaintenanceConfig === 'function') {
+                await window.API.updateMaintenanceConfig(this.currentVehicle.id, newConfig);
+            }
             
-            // Atualizar configuração global
+            // ✅ CORREÇÃO: Atualizar configuração global de forma segura
             if (window.APP_CONFIG) {
                 window.APP_CONFIG.maintenanceIntervals = newConfig;
             }
             
             this.showNotification('Configurações salvas com sucesso!', 'success');
             
-            // Atualizar alertas
-            if (window.UI) {
+            // ✅ CORREÇÃO: Atualizar alertas de forma segura
+            if (window.UI && typeof window.UI.updateMaintenanceAlerts === 'function') {
                 await window.UI.updateMaintenanceAlerts();
             }
             
@@ -313,17 +410,44 @@ class Vehicles {
         }
     }
 
-    // Renderizar lista de veículos
+    // Renderizar lista de veículos - VERSÃO CORRIGIDA
     static renderVehicles() {
         const vehiclesList = document.getElementById('vehiclesList');
-        if (!vehiclesList) return;
+        if (!vehiclesList) {
+            console.log('⚠️ Elemento vehiclesList não encontrado');
+            return;
+        }
         
         vehiclesList.innerHTML = '';
+        
+        // ✅ CORREÇÃO: Garantir que vehicles seja array
+        if (!Array.isArray(this.vehicles)) {
+            this.vehicles = [];
+        }
+        
+        if (this.vehicles.length === 0) {
+            vehiclesList.innerHTML = `
+                <div class="col-12 text-center py-4">
+                    <i class="fas fa-motorcycle fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nenhum veículo cadastrado</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('addVehicleModal').style.display='block'">
+                        <i class="fas fa-plus me-2"></i>Adicionar Primeiro Veículo
+                    </button>
+                </div>
+            `;
+            return;
+        }
         
         this.vehicles.forEach(vehicle => {
             const isActive = this.currentVehicle && vehicle.id === this.currentVehicle.id;
             const vehicleElement = document.createElement('div');
             vehicleElement.className = `col-md-4 mb-3 vehicle-selector ${isActive ? 'active' : ''}`;
+            
+            // ✅ CORREÇÃO: Sanitização de dados
+            const vehicleName = this.escapeHtml(vehicle.name || 'Sem nome');
+            const vehicleModel = this.escapeHtml(vehicle.model || 'Sem modelo');
+            const vehicleYear = vehicle.year || 'N/A';
+            const mileage = this.formatNumber(vehicle.current_mileage || vehicle.mileage || 0);
             
             vehicleElement.innerHTML = `
                 <div class="card h-100 position-relative" onclick="Vehicles.selectVehicle(${vehicle.id})">
@@ -333,9 +457,9 @@ class Vehicles {
                     </div>` : ''}
                     <div class="card-body text-center">
                         <i class="fas fa-motorcycle fa-2x mb-2 text-primary"></i>
-                        <h5 class="card-title">${vehicle.name}</h5>
-                        <p class="card-text">${vehicle.model} - ${vehicle.year}</p>
-                        <p class="card-text"><small class="text-muted">${this.formatNumber(vehicle.current_mileage)} km</small></p>
+                        <h5 class="card-title">${vehicleName}</h5>
+                        <p class="card-text">${vehicleModel} - ${vehicleYear}</p>
+                        <p class="card-text"><small class="text-muted">${mileage} km</small></p>
                     </div>
                 </div>
             `;
@@ -345,61 +469,95 @@ class Vehicles {
         this.updateVehicleManagementList();
     }
 
-    // Renderizar informações do veículo
+    // ✅ CORREÇÃO: Renderizar informações do veículo - VERSÃO CORRIGIDA
     static renderVehicleInfo() {
-        if (!this.currentVehicle) {
-            const currentVehicleTitle = document.getElementById('currentVehicleTitle');
-            if (currentVehicleTitle) {
-                currentVehicleTitle.textContent = 'Nenhum veículo selecionado';
-            }
-            return;
-        }
-        
         const currentVehicleTitle = document.getElementById('currentVehicleTitle');
         const bikeModel = document.getElementById('bikeModel');
         const bikeYear = document.getElementById('bikeYear');
         const bikePlate = document.getElementById('bikePlate');
         const currentMileage = document.getElementById('currentMileage');
         
-        if (currentVehicleTitle) currentVehicleTitle.textContent = this.currentVehicle.name;
-        if (bikeModel) bikeModel.value = this.currentVehicle.model;
-        if (bikeYear) bikeYear.value = this.currentVehicle.year;
-        if (bikePlate) bikePlate.value = this.currentVehicle.plate || '';
-        if (currentMileage) currentMileage.value = this.currentVehicle.current_mileage;
+        if (!this.currentVehicle) {
+            if (currentVehicleTitle) {
+                currentVehicleTitle.textContent = 'Nenhum veículo selecionado';
+            }
+            if (bikeModel) bikeModel.value = '';
+            if (bikeYear) bikeYear.value = '';
+            if (bikePlate) bikePlate.value = '';
+            if (currentMileage) currentMileage.value = '0';
+            return;
+        }
+        
+        // ✅ CORREÇÃO: Preencher dados de forma segura
+        if (currentVehicleTitle) {
+            currentVehicleTitle.textContent = this.escapeHtml(this.currentVehicle.name || 'Veículo sem nome');
+        }
+        if (bikeModel) bikeModel.value = this.escapeHtml(this.currentVehicle.model || '');
+        if (bikeYear) bikeYear.value = this.currentVehicle.year || '';
+        if (bikePlate) bikePlate.value = this.escapeHtml(this.currentVehicle.plate || '');
+        if (currentMileage) {
+            const mileage = this.currentVehicle.current_mileage || this.currentVehicle.mileage || 0;
+            currentMileage.value = parseInt(mileage) || 0;
+        }
     }
 
-    // Salvar informações do veículo
+    // Salvar informações do veículo - VERSÃO CORRIGIDA
     static async saveBikeInfo() {
         if (!this.currentVehicle) {
             this.showNotification('Nenhum veículo selecionado.', 'error');
             return;
         }
         
-        const vehicleData = {
-            name: this.currentVehicle.name,
-            model: document.getElementById('bikeModel').value,
-            year: parseInt(document.getElementById('bikeYear').value),
-            plate: document.getElementById('bikePlate').value,
-            current_mileage: parseInt(document.getElementById('currentMileage').value)
-        };
-        
-        await this.updateVehicle(this.currentVehicle.id, vehicleData);
+        try {
+            const bikeModel = document.getElementById('bikeModel');
+            const bikeYear = document.getElementById('bikeYear');
+            const bikePlate = document.getElementById('bikePlate');
+            const currentMileage = document.getElementById('currentMileage');
+            
+            // ✅ CORREÇÃO: Validação dos elementos
+            if (!bikeModel || !bikeYear || !currentMileage) {
+                this.showNotification('Elementos do formulário não encontrados.', 'error');
+                return;
+            }
+            
+            const vehicleData = {
+                name: this.currentVehicle.name, // Mantém o nome original
+                model: bikeModel.value.trim(),
+                year: parseInt(bikeYear.value) || 0,
+                plate: bikePlate?.value.trim() || '',
+                current_mileage: parseInt(currentMileage.value) || 0
+            };
+            
+            // ✅ CORREÇÃO: Validação dos dados
+            if (!vehicleData.model || vehicleData.year < 1900 || vehicleData.current_mileage < 0) {
+                this.showNotification('Dados inválidos. Verifique os campos.', 'error');
+                return;
+            }
+            
+            await this.updateVehicle(this.currentVehicle.id, vehicleData);
+        } catch (error) {
+            console.error('❌ Erro ao salvar informações:', error);
+            this.showNotification('Erro ao salvar informações: ' + error.message, 'error');
+        }
     }
 
-    // Mostrar modal de exclusão
+    // Mostrar modal de exclusão - VERSÃO CORRIGIDA
     static showDeleteModal(vehicleId) {
         const vehicle = this.vehicles.find(v => v.id === vehicleId);
-        if (!vehicle) return;
+        if (!vehicle) {
+            this.showNotification('Veículo não encontrado.', 'error');
+            return;
+        }
         
         const vehicleToDeleteName = document.getElementById('vehicleToDeleteName');
         if (vehicleToDeleteName) {
-            vehicleToDeleteName.textContent = `${vehicle.name} (${vehicle.model} - ${vehicle.year})`;
+            vehicleToDeleteName.textContent = `${this.escapeHtml(vehicle.name)} (${this.escapeHtml(vehicle.model)} - ${vehicle.year})`;
         }
         
         const modal = new bootstrap.Modal(document.getElementById('deleteVehicleModal'));
         modal.show();
         
-        // Configurar botão de confirmação
+        // ✅ CORREÇÃO: Configurar botão de confirmação de forma segura
         const confirmDeleteVehicleBtn = document.getElementById('confirmDeleteVehicleBtn');
         if (confirmDeleteVehicleBtn) {
             confirmDeleteVehicleBtn.onclick = () => {
@@ -409,20 +567,29 @@ class Vehicles {
         }
     }
 
-    // Atualizar lista de gerenciamento de veículos
+    // Atualizar lista de gerenciamento de veículos - VERSÃO CORRIGIDA
     static updateVehicleManagementList() {
         const vehicleManagementList = document.getElementById('vehicleManagementList');
         if (!vehicleManagementList) return;
         
         vehicleManagementList.innerHTML = '';
         
+        if (this.vehicles.length === 0) {
+            vehicleManagementList.innerHTML = `
+                <div class="text-center py-3">
+                    <p class="text-muted">Nenhum veículo cadastrado</p>
+                </div>
+            `;
+            return;
+        }
+        
         this.vehicles.forEach(vehicle => {
             const vehicleElement = document.createElement('div');
             vehicleElement.className = 'list-group-item d-flex justify-content-between align-items-center';
             vehicleElement.innerHTML = `
                 <div>
-                    <h6 class="mb-1">${vehicle.name}</h6>
-                    <p class="mb-1">${vehicle.model} - ${vehicle.year}</p>
+                    <h6 class="mb-1">${this.escapeHtml(vehicle.name)}</h6>
+                    <p class="mb-1">${this.escapeHtml(vehicle.model)} - ${vehicle.year}</p>
                     <small>${this.formatNumber(vehicle.current_mileage)} km</small>
                 </div>
                 <button class="btn btn-outline-danger btn-sm" onclick="Vehicles.showDeleteModal(${vehicle.id})">
@@ -433,19 +600,41 @@ class Vehicles {
         });
     }
 
-    // Resetar histórico do veículo
+    // Resetar histórico do veículo - VERSÃO CORRIGIDA
     static async resetVehicleHistory() {
         if (!this.currentVehicle) {
             this.showNotification('Nenhum veículo selecionado.', 'error');
             return;
         }
         
+        if (!confirm('Tem certeza que deseja resetar todo o histórico deste veículo? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+        
         try {
-            const services = await window.API.getServices(this.currentVehicle.id);
+            const response = await window.API.getServices(this.currentVehicle.id);
+            
+            // ✅ CORREÇÃO: Extrair serviços da resposta de forma robusta
+            let services = [];
+            if (Array.isArray(response)) {
+                services = response;
+            } else if (response && Array.isArray(response.services)) {
+                services = response.services;
+            } else if (response && response.success && Array.isArray(response.services)) {
+                services = response.services;
+            }
+            
             console.log('🗑️ Excluindo serviços:', services);
             
+            // ✅ CORREÇÃO: Excluir serviços de forma segura
             for (const service of services) {
-                await window.API.deleteService(service.id);
+                if (service && service.id) {
+                    try {
+                        await window.API.deleteService(service.id);
+                    } catch (error) {
+                        console.error(`❌ Erro ao excluir serviço ${service.id}:`, error);
+                    }
+                }
             }
             
             // Recarregar dados
@@ -459,6 +648,18 @@ class Vehicles {
         }
     }
 
+    // ✅ NOVO: Utilitário para escapar HTML (prevenção XSS)
+    static escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        return unsafe
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     // Utilitários
     static formatNumber(number) {
         if (number === null || number === undefined) return '0';
@@ -466,7 +667,23 @@ class Vehicles {
     }
 
     static showNotification(message, type = 'info') {
-        alert(`${type.toUpperCase()}: ${message}`);
+        // ✅ CORREÇÃO: Notificação melhorada
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
     }
 
     static hideModal(modalId) {
@@ -475,13 +692,18 @@ class Vehicles {
             const modal = bootstrap.Modal.getInstance(modalElement);
             if (modal) {
                 modal.hide();
+            } else {
+                // Fallback se a instância Bootstrap não existir
+                modalElement.style.display = 'none';
+                modalElement.classList.remove('show');
             }
         }
     }
 }
 
-// Inicialização simplificada
-console.log('🚗 Vehicles carregado - VERSÃO CORRIGIDA (NÃO-BLOQUEANTE)');
+// ✅ CORREÇÃO: Inicialização corrigida
+console.log('🚗 Vehicles carregado - VERSÃO COMPLETAMENTE CORRIGIDA');
 
-// Tornar global
+// Inicializar e tornar global
+Vehicles.initialize();
 window.Vehicles = Vehicles;

@@ -134,7 +134,8 @@ def get_vehicles():
             "model": "CB 500", 
             "year": 2020,
             "plate": "ABC-1234",
-            "color": "Vermelho"
+            "color": "Vermelho",
+            "current_mileage": 5000
         },
         {
             "id": 2,
@@ -142,10 +143,11 @@ def get_vehicles():
             "model": "MT-07",
             "year": 2021,
             "plate": "XYZ-5678", 
-            "color": "Azul"
+            "color": "Azul",
+            "current_mileage": 7000
         }
     ]
-    return jsonify(vehicles)  # 🔥 MUDEI: retorna array direto, não objeto com "vehicles"
+    return jsonify(vehicles)  # 🔥 RETORNA ARRAY DIRETO
 
 @app.route('/api/vehicles', methods=['POST'])
 def add_vehicle():
@@ -156,9 +158,10 @@ def add_vehicle():
         "model": request.json.get('model', 'Modelo X'),
         "year": request.json.get('year', 2023),
         "plate": request.json.get('plate', 'NEW-9999'),
-        "color": request.json.get('color', 'Preto')
+        "color": request.json.get('color', 'Preto'),
+        "current_mileage": request.json.get('current_mileage', 0)
     }
-    return jsonify(new_vehicle)  # 🔥 MUDEI: retorna o veículo direto
+    return jsonify(new_vehicle)
 
 @app.route('/api/vehicles/<int:vehicle_id>', methods=['PUT'])
 def update_vehicle(vehicle_id):
@@ -169,7 +172,8 @@ def update_vehicle(vehicle_id):
         "model": request.json.get('model', 'Modelo Atualizado'),
         "year": request.json.get('year', 2023),
         "plate": request.json.get('plate', 'UPD-9999'),
-        "color": request.json.get('color', 'Atualizado')
+        "color": request.json.get('color', 'Atualizado'),
+        "current_mileage": request.json.get('current_mileage', 0)
     }
     return jsonify(updated_vehicle)
 
@@ -180,32 +184,32 @@ def delete_vehicle(vehicle_id):
         "message": f"Veículo {vehicle_id} excluído com sucesso!"
     })
 
-# 🔥 ROTAS DE SERVIÇOS/MANUTENÇÕES QUE O FRONTEND PRECISA:
+# 🔥 ROTAS DE SERVIÇOS/MANUTENÇÕES CORRIGIDAS:
 @app.route('/api/vehicles/<int:vehicle_id>/services', methods=['GET'])
 def get_vehicle_services(vehicle_id):
-    return jsonify({
-        "success": True,
-        "services": [
-            {
-                "id": 1,
-                "vehicle_id": vehicle_id,
-                "type": "Troca de óleo",
-                "description": "Troca de óleo do motor",
-                "date": "2024-01-15",
-                "mileage": 5000,
-                "cost": 150.00
-            },
-            {
-                "id": 2,
-                "vehicle_id": vehicle_id,
-                "type": "Ajuste de freios", 
-                "description": "Regulagem dos freios dianteiro e traseiro",
-                "date": "2024-02-20",
-                "mileage": 7000,
-                "cost": 80.00
-            }
-        ]
-    })
+    services = [  # 🔥 RETORNA ARRAY DIRETO
+        {
+            "id": 1,
+            "vehicle_id": vehicle_id,
+            "type": "Troca de óleo",
+            "service_type": "Troca de óleo",
+            "description": "Troca de óleo do motor",
+            "date": "2024-01-15",
+            "mileage": 5000,
+            "cost": 150.00
+        },
+        {
+            "id": 2,
+            "vehicle_id": vehicle_id,
+            "type": "Ajuste de freios",
+            "service_type": "Ajuste de freios", 
+            "description": "Regulagem dos freios dianteiro e traseiro",
+            "date": "2024-02-20",
+            "mileage": 7000,
+            "cost": 80.00
+        }
+    ]
+    return jsonify(services)  # 🔥 ARRAY DIRETO
 
 @app.route('/api/vehicles/<int:vehicle_id>/services', methods=['POST'])
 def add_vehicle_service(vehicle_id):
@@ -216,6 +220,7 @@ def add_vehicle_service(vehicle_id):
             "id": 3,
             "vehicle_id": vehicle_id,
             "type": "Nova manutenção",
+            "service_type": "Nova manutenção",
             "description": "Descrição do serviço",
             "date": "2024-03-01",
             "mileage": 8000,
@@ -237,38 +242,34 @@ def delete_service(service_id):
         "message": f"Serviço {service_id} excluído com sucesso!"
     })
 
-# 🔥 ROTAS DE ESTATÍSTICAS QUE O FRONTEND PRECISA:
+# 🔥 ROTAS DE ESTATÍSTICAS CORRIGIDAS:
 @app.route('/api/vehicles/<int:vehicle_id>/stats', methods=['GET'])
 def get_vehicle_stats(vehicle_id):
-    return jsonify({
-        "success": True,
-        "stats": {
-            "total_services": 5,
-            "total_spent": 850.00,
-            "last_service_mileage": 8000,
-            "next_service_estimate": 10000,
-            "services_by_type": {
-                "Troca de óleo": 2,
-                "Ajuste de freios": 1,
-                "Troca de pneu": 1,
-                "Revisão geral": 1
-            }
+    stats = {  # 🔥 RETORNA OBJETO DIRETO
+        "total_services": 5,
+        "total_spent": 850.00,
+        "last_service_mileage": 8000,
+        "next_service_estimate": 10000,
+        "services_by_type": {
+            "Troca de óleo": 2,
+            "Ajuste de freios": 1,
+            "Troca de pneu": 1,
+            "Revisão geral": 1
         }
-    })
+    }
+    return jsonify(stats)  # 🔥 OBJETO DIRETO
 
-# 🔥 ROTAS DE CONFIGURAÇÕES DE MANUTENÇÃO:
+# 🔥 ROTAS DE CONFIGURAÇÕES DE MANUTENÇÃO CORRIGIDAS:
 @app.route('/api/vehicles/<int:vehicle_id>/maintenance-config', methods=['GET'])
 def get_maintenance_config(vehicle_id):
-    return jsonify({
-        "success": True,
-        "config": {
-            "Troca de óleo": 5000,
-            "Troca de pneu": 10000,
-            "Ajuste de freios": 7000,
-            "Troca de correia": 15000,
-            "Revisão geral": 10000
-        }
-    })
+    config = {  # 🔥 RETORNA OBJETO DIRETO
+        "Troca de óleo": 5000,
+        "Troca de pneu": 10000,
+        "Ajuste de freios": 7000,
+        "Troca de correia": 15000,
+        "Revisão geral": 10000
+    }
+    return jsonify(config)  # 🔥 OBJETO DIRETO
 
 @app.route('/api/vehicles/<int:vehicle_id>/maintenance-config', methods=['PUT'])
 def update_maintenance_config(vehicle_id):
@@ -284,6 +285,7 @@ def update_vehicle_mileage(vehicle_id):
         "success": True,
         "message": f"Quilometragem do veículo {vehicle_id} atualizada com sucesso!"
     })
+
 # Criar tabelas (APENAS UMA VEZ)
 with app.app_context():
     db.create_all()
