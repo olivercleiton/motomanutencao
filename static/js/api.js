@@ -264,20 +264,36 @@ class API {
         });
     }
 
-    // api.js - APENAS A FUNÇÃO getMaintenanceConfig CORRIGIDA
+    // ✅ CORREÇÃO COMPLETA: getMaintenanceConfig corrigido
     async getMaintenanceConfig(vehicleId) {
-    try {
-        const response = await this.request(`/vehicles/${vehicleId}/maintenance-config`);
-        
-        // ✅ CORREÇÃO: Retornar objeto diretamente
-        if (response && typeof response === 'object') {
-            return response.config || response;
+        try {
+            console.log('🔧 Buscando configurações para veículo:', vehicleId);
+            
+            const response = await this.request(`/vehicles/${vehicleId}/config`);
+            
+            // ✅ CORREÇÃO: Garantir que configs seja sempre um array
+            let configs = [];
+            
+            if (response && response.configs) {
+                if (Array.isArray(response.configs)) {
+                    configs = response.configs;
+                } else if (typeof response.configs === 'object') {
+                    // Se configs é um objeto, converter para array
+                    configs = Object.values(response.configs);
+                }
+            } else if (response && Array.isArray(response)) {
+                // Se a resposta já for um array
+                configs = response;
+            }
+            
+            console.log('✅ Configurações carregadas (array):', configs);
+            return configs;
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar configurações:', error);
+            // ✅ Retornar array vazio em caso de erro
+            return [];
         }
-        return {};
-    } catch (error) {
-        console.error('❌ Erro ao carregar configurações:', error);
-        return {};
-    }
     }
 
     async updateMaintenanceConfig(vehicleId, configs) {

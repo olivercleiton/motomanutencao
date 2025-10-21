@@ -267,65 +267,69 @@ class Vehicles {
         }
     }
 
-    // Inicializar configurações do veículo - VERSÃO CORRIGIDA
+    // ✅ CORREÇÃO COMPLETA: Método initializeVehicleConfig corrigido
     static async initializeVehicleConfig(vehicleId) {
         try {
             console.log('🔧 Inicializando configurações para veículo:', vehicleId);
             
-            // ✅ CORREÇÃO: Verificar se já existem configurações de forma segura
-            let config = {};
+            const configs = await window.API.getMaintenanceConfig(vehicleId);
             
-            if (window.API && typeof window.API.getMaintenanceConfig === 'function') {
-                const response = await window.API.getMaintenanceConfig(vehicleId);
-                
-                // ✅ CORREÇÃO: Extrair config da resposta de forma robusta
-                if (response && typeof response === 'object') {
-                    config = response.config || response.data || response;
-                }
+            // ✅ CORREÇÃO: Garantir que configs seja um array
+            const safeConfigs = Array.isArray(configs) ? configs : [];
+            
+            console.log('✅ Configurações seguras:', safeConfigs);
+            
+            if (safeConfigs.length > 0) {
+                this.renderMaintenanceConfig(safeConfigs);
+            } else {
+                this.renderEmptyConfig();
             }
-            
-            console.log('📋 Configurações existentes:', config);
-            
-            // ✅ CORREÇÃO: Se não existir ou estiver vazio, criar padrão
-            if (!config || typeof config !== 'object' || Object.keys(config).length === 0) {
-                console.log('🏗️ Criando configurações padrão...');
-                const defaultConfig = {
-                    "Troca de óleo": 5000,
-                    "Troca de pneu": 10000,
-                    "Ajuste de freios": 7000,
-                    "Troca de correia": 15000,
-                    "Revisão geral": 10000
-                };
-                
-                if (window.API && typeof window.API.updateMaintenanceConfig === 'function') {
-                    await window.API.updateMaintenanceConfig(vehicleId, defaultConfig);
-                }
-                config = defaultConfig;
-                console.log('✅ Configurações criadas:', config);
-            }
-            
-            // ✅ CORREÇÃO: Atualizar configuração global de forma segura
-            if (window.APP_CONFIG) {
-                window.APP_CONFIG.maintenanceIntervals = config;
-            }
-            
-            // Renderizar na interface
-            this.renderMaintenanceConfig();
             
         } catch (error) {
             console.error('❌ Erro ao inicializar configurações:', error);
+            this.renderEmptyConfig();
         }
     }
 
-    // Renderizar configurações na interface - VERSÃO CORRIGIDA
-    static renderMaintenanceConfig() {
+    // ✅ NOVO: Método para renderizar configuração vazia
+    static renderEmptyConfig() {
         const configContainer = document.getElementById('maintenanceConfig');
         if (!configContainer) {
             console.log('⚠️ Elemento maintenanceConfig não encontrado');
             return;
         }
         
-        const config = window.APP_CONFIG?.maintenanceIntervals || {};
+        console.log('🏗️ Renderizando configurações padrão...');
+        
+        // Configurações padrão
+        const defaultConfig = {
+            "Troca de óleo": 5000,
+            "Troca de pneu": 10000,
+            "Ajuste de freios": 7000,
+            "Troca de correia": 15000,
+            "Revisão geral": 10000
+        };
+        
+        // ✅ CORREÇÃO: Atualizar configuração global de forma segura
+        if (window.APP_CONFIG) {
+            window.APP_CONFIG.maintenanceIntervals = defaultConfig;
+        } else {
+            window.APP_CONFIG = { maintenanceIntervals: defaultConfig };
+        }
+        
+        this.renderMaintenanceConfig();
+    }
+
+    // Renderizar configurações na interface - VERSÃO CORRIGIDA
+    static renderMaintenanceConfig(configs = null) {
+        const configContainer = document.getElementById('maintenanceConfig');
+        if (!configContainer) {
+            console.log('⚠️ Elemento maintenanceConfig não encontrado');
+            return;
+        }
+        
+        // ✅ CORREÇÃO: Usar configs passadas ou as globais
+        const config = configs || window.APP_CONFIG?.maintenanceIntervals || {};
         console.log('🎨 Renderizando configurações:', config);
         
         configContainer.innerHTML = '';
@@ -395,6 +399,8 @@ class Vehicles {
             // ✅ CORREÇÃO: Atualizar configuração global de forma segura
             if (window.APP_CONFIG) {
                 window.APP_CONFIG.maintenanceIntervals = newConfig;
+            } else {
+                window.APP_CONFIG = { maintenanceIntervals: newConfig };
             }
             
             this.showNotification('Configurações salvas com sucesso!', 'success');
