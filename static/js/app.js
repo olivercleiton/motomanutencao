@@ -1,4 +1,10 @@
 // Aplicativo principal - VERSÃO CORRIGIDA com persistência completa
+// ✅ GARANTE QUE A API ESTÁ DISPONÍVEL GLOBALMENTE
+if (!window.API) {
+    window.API = new API();
+    console.log('🌐 API global inicializada automaticamente');
+}
+
 const App = {
     // Estado global da aplicação
     state: {
