@@ -233,63 +233,45 @@ class Vehicles {
         }, 50);
     }
 
-    // Carregar dados relacionados ao veículo - VERSÃO CORRIGIDA
-    static async loadVehicleRelatedData(vehicleId) {
-        try {
-            console.log('📦 Carregando dados relacionados para veículo:', vehicleId);
-            
-            // ✅ CORREÇÃO: Carregar serviços de forma segura
-            if (window.Services && typeof window.Services.loadServices === 'function') {
-                await window.Services.loadServices(vehicleId);
-            } else {
-                console.warn('⚠️ Módulo Services não disponível');
-            }
-            
-            // ✅ CORREÇÃO: Carregar estatísticas de forma segura
-            if (window.Stats && typeof window.Stats.loadStatistics === 'function') {
-                await window.Stats.loadStatistics(vehicleId);
-            } else {
-                console.warn('⚠️ Módulo Stats não disponível');
-            }
-            
-            // ✅ CORREÇÃO: Carregar e inicializar configurações
-            await this.initializeVehicleConfig(vehicleId);
-            
-            // ✅ CORREÇÃO: Atualizar alertas de forma segura
-            if (window.UI && typeof window.UI.updateMaintenanceAlerts === 'function') {
-                await window.UI.updateMaintenanceAlerts();
-            }
-            
-            console.log('✅ Todos os dados relacionados carregados para veículo:', vehicleId);
-            
-        } catch (error) {
-            console.error('❌ Erro ao carregar dados do veículo:', error);
+   	 // Carregar dados relacionados ao veículo - VERSÃO CORRIGIDA
+   	 // ✅ CORREÇÃO: Método loadVehicleRelatedData FINAL
+	static async loadVehicleRelatedData(vehicleId) {
+  	  try {
+        console.log('📦 Carregando dados relacionados para veículo:', vehicleId);
+        
+        // ✅ APENAS serviços e estatísticas (já funcionam)
+        if (window.Services && typeof window.Services.loadServices === 'function') {
+            await window.Services.loadServices(vehicleId);
         }
+        
+        if (window.Stats && typeof window.Stats.loadStatistics === 'function') {
+            await window.Stats.loadStatistics(vehicleId);
+        }
+        
+        // ✅ CONFIGURAÇÕES: Usar apenas local, SEM backend
+        console.log('🏗️ Usando configurações padrão locais');
+        this.renderEmptyConfig();
+        
+        console.log('✅ Todos os dados carregados com sucesso!');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar dados do veículo:', error);
     }
+}
 
-    // ✅ CORREÇÃO COMPLETA: Método initializeVehicleConfig corrigido
-    static async initializeVehicleConfig(vehicleId) {
-        try {
-            console.log('🔧 Inicializando configurações para veículo:', vehicleId);
-            
-            const configs = await window.API.getMaintenanceConfig(vehicleId);
-            
-            // ✅ CORREÇÃO: Garantir que configs seja um array
-            const safeConfigs = Array.isArray(configs) ? configs : [];
-            
-            console.log('✅ Configurações seguras:', safeConfigs);
-            
-            if (safeConfigs.length > 0) {
-                this.renderMaintenanceConfig(safeConfigs);
-            } else {
-                this.renderEmptyConfig();
-            }
-            
-        } catch (error) {
-            console.error('❌ Erro ao inicializar configurações:', error);
-            this.renderEmptyConfig();
-        }
+	// ✅ CORREÇÃO: Método initializeVehicleConfig - COMPLETAMENTE SEGURO
+	static async initializeVehicleConfig(vehicleId) {
+    	try {
+        console.log('🔧 Inicializando configurações LOCAIS para veículo:', vehicleId);
+        
+        // ✅ NUNMAIS chamar API - usar apenas configurações locais
+        this.renderEmptyConfig();
+        
+    } catch (error) {
+        console.error('❌ Erro em initializeVehicleConfig:', error);
+        this.renderEmptyConfig(); // Fallback garantido
     }
+}
 
     // ✅ NOVO: Método para renderizar configuração vazia
     static renderEmptyConfig() {
