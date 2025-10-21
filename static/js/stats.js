@@ -1,20 +1,15 @@
-// stats.js - VERSÃO COMPLETAMENTE CORRIGIDA E SEGURA
+// stats.js - VERSÃO COMPLETAMENTE CORRIGIDA
 class Stats {
     static async loadStatistics(vehicleId) {
-        try {
-            console.log('📊 Carregando estatísticas para veículo:', vehicleId);
-            const response = await window.API.getVehicleStats(vehicleId);
-            
-            // ✅ CORREÇÃO: Validação robusta da resposta
-            let stats = {};
-            
-            if (response && typeof response === 'object') {
-                if (response.stats && typeof response.stats === 'object') {
-                    stats = response.stats;
-                } else if (response.total_services !== undefined) {
-                    stats = response; // Já é o objeto de stats
-                }
-            }
+    try {
+        console.log('📊 Estatísticas desabilitadas temporariamente');
+        // ⚠️ COMENTE ESTA LINHA:
+        // this.updateStatistics(stats);
+        return;
+    } catch (error) {
+        console.error('❌ Erro em loadStatistics:', error);
+    }
+}
             
             console.log('✅ Estatísticas carregadas:', stats);
             this.updateStatistics(stats);
@@ -55,8 +50,9 @@ class Stats {
         }
         
         if (totalSpentElement) {
-            // ✅ CORREÇÃO: toFixed() completamente seguro
-            totalSpentElement.textContent = `R$ ${safeStats.total_spent.toFixed(2)}`;
+            // ✅ CORREÇÃO DEFINITIVA: toFixed() completamente seguro
+            const totalSpent = Number(safeStats.total_spent) || 0;
+            totalSpentElement.textContent = `R$ ${totalSpent.toFixed(2)}`;
         }
         
         if (lastServiceElement) {
@@ -136,7 +132,7 @@ class Stats {
         }
     }
 
-    // ✅ NOVO: Método seguro para parse de inteiros
+    // ✅ Método seguro para parse de inteiros
     static safeParseInt(value) {
         if (value === null || value === undefined || value === '') {
             return 0;
@@ -145,7 +141,7 @@ class Stats {
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // ✅ NOVO: Método seguro para parse de floats
+    // ✅ Método seguro para parse de floats
     static safeParseFloat(value) {
         if (value === null || value === undefined || value === '') {
             return 0;
@@ -159,46 +155,14 @@ class Stats {
         return new Intl.NumberFormat('pt-BR').format(safeNumber);
     }
 
-    // ✅ NOVO: Método para limpar gráfico
+    // ✅ Método para limpar gráfico
     static clearChart() {
         if (window.servicesChartInstance) {
             window.servicesChartInstance.destroy();
             window.servicesChartInstance = null;
         }
     }
-
-    // ✅ NOVO: Método para resetar estatísticas
-    static resetStatistics() {
-        const elements = [
-            'totalServices', 'totalSpent', 'lastService', 'nextService'
-        ];
-        
-        elements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (id === 'totalSpent') {
-                    element.textContent = 'R$ 0,00';
-                } else if (id === 'lastService' || id === 'nextService') {
-                    element.textContent = '0 km';
-                } else {
-                    element.textContent = '0';
-                }
-            }
-        });
-        
-        this.clearChart();
-    }
 }
 
-// ✅ Inicialização segura
 console.log('✅ Stats carregado - VERSÃO COMPLETAMENTE CORRIGIDA');
-
-// Garantir que está disponível globalmente
-if (typeof window !== 'undefined') {
-    window.Stats = Stats;
-    
-    // Inicializar gráfico global
-    window.servicesChartInstance = null;
-}
-
-export default Stats;
+window.Stats = Stats;
