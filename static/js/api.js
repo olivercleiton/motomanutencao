@@ -221,7 +221,7 @@ class API {
         console.log('✅ API: Logout completo');
     }
 
-    // ✅ Vehicle methods (mantidos, mas usando instância)
+    // ✅ Vehicle methods
     async getVehicles() {
         return await this.request('/vehicles');
     }
@@ -264,23 +264,18 @@ class API {
         });
     }
 
-    // ✅ CORREÇÃO COMPLETA: getMaintenanceConfig corrigido
+    // ✅ CORREÇÃO: getMaintenanceConfig SEMPRE retorna array vazio
     async getMaintenanceConfig(vehicleId) {
-    try {
-        console.log('🔧 Buscando configurações para veículo:', vehicleId);
-        
-        // ⏸️ TEMPORARIAMENTE: Retornar array vazio para evitar erros
-        console.log('⏸️ Configurações temporariamente desabilitadas - retornando vazio');
-        return [];
-        
-    } catch (error) {
-        console.error('❌ Erro ao carregar configurações:', error);
-        return [];
+        try {
+            console.log('🔧 Configurações temporariamente desabilitadas');
+            return []; // ⏸️ SEMPRE retorna array vazio
+        } catch (error) {
+            console.error('❌ Erro em getMaintenanceConfig:', error);
+            return [];
+        }
     }
-}
 
     async updateMaintenanceConfig(vehicleId, configs) {
-        // ✅ CORREÇÃO: Enviar como objeto simples, não array
         return await this.request(`/vehicles/${vehicleId}/maintenance-config`, {
             method: 'PUT',
             body: JSON.stringify(configs)
@@ -293,7 +288,7 @@ class API {
     }
 }
 
-// ✅ Sincronização offline (mantida com pequenas melhorias)
+// ✅ Sincronização offline
 class OfflineSync {
     static pendingRequests = JSON.parse(localStorage.getItem('pending_requests') || '[]');
 
