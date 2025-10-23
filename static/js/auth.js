@@ -53,7 +53,7 @@ class Auth {
         console.log('🔐 Auth: Tentando login com:', email);
 
         try {
-            if (!window.API?.login) {
+            if (!API?.login) {
                 throw new Error('API não carregada corretamente');
             }
 
@@ -145,7 +145,7 @@ class Auth {
         }
 
         try {
-            if (!window.API?.register) {
+            if (!API?.register) {
                 throw new Error('API não carregada corretamente');
             }
 
