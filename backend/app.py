@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -28,11 +28,24 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-
-# Suas rotas existentes
+# ========== ROTAS DO FRONTEND ==========
 @app.route('/')
-def home():
-    return jsonify({"message": "API Motomanutencao Online!"})
+def serve_frontend():
+    """Serve o frontend na rota raiz"""
+    return send_file('../static/index.html')
+
+@app.route('/<path:path>')
+def serve_static_files(path):
+    """Serve arquivos estáticos (CSS, JS, imagens)"""
+    try:
+        return send_from_directory('../static', path)
+    except:
+        return jsonify({"error": "File not found"}), 404
+
+# ========== ROTAS DA API ==========
+@app.route('/api/status')
+def api_status():
+    return jsonify({"database": "PostgreSQL", "message": "API Motomanutencao Online! 🚀"})
 
 @app.route('/api/users', methods=['POST'])
 def create_user():
