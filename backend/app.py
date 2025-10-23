@@ -28,19 +28,27 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
+# ========== ROTA DE TESTE ==========
+@app.route('/test')
+def test_route():
+    return jsonify({"message": "TESTE - Rota funcionando!"})
+
 # ========== ROTAS DO FRONTEND ==========
 @app.route('/')
 def serve_frontend():
     """Serve o frontend na rota raiz"""
-    return send_file('../static/index.html')
+    try:
+        return send_file('../static/index.html')
+    except Exception as e:
+        return jsonify({"error": f"Frontend not found: {str(e)}"}), 404
 
 @app.route('/<path:path>')
 def serve_static_files(path):
     """Serve arquivos estáticos (CSS, JS, imagens)"""
     try:
         return send_from_directory('../static', path)
-    except:
-        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Static file not found: {str(e)}"}), 404
 
 # ========== ROTAS DA API ==========
 @app.route('/api/status')
