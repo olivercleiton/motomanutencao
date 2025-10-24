@@ -9,16 +9,19 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Configurar PostgreSQL para Render
+# Configurar PostgreSQL para Render com SSL
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Adicionar parâmetros SSL
+if DATABASE_URL:
+    DATABASE_URL += "?sslmode=require"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL or 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
 # Modelo User
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
