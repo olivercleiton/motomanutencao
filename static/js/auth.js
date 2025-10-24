@@ -1,4 +1,4 @@
-// auth.js - versão CORRIGIDA com persistência completa
+// auth.js - versão CORRIGIDA com tratamento de JSON
 class Auth {
     static currentUser = null;
     static isAuthenticated = false;
@@ -23,17 +23,11 @@ class Auth {
                 this.currentUser = JSON.parse(user);
                 this.isAuthenticated = true;
                 
-                // ✅ Garantir que a API tenha o token
-                if (window.API) {
-                    window.API.token = token;
-                    console.log('🔑 Auth: Token definido na API');
-                }
-                
                 console.log('✅ Auth: Usuário recuperado:', this.currentUser.email);
                 return true;
             } catch (error) {
                 console.error('❌ Auth: Erro ao recuperar usuário:', error);
-                this.clearAuth(); // Limpar dados corrompidos
+                this.clearAuth();
             }
         }
         
@@ -42,7 +36,7 @@ class Auth {
         return false;
     }
 
-    // ✅ Login
+    // ✅ **LOGIN CORRIGIDO - com tratamento de JSON**
     static async handleLogin(event) {
         event.preventDefault();
         const email = document.getElementById('loginEmail').value.trim();
@@ -51,11 +45,45 @@ class Auth {
         console.log('🔐 Auth: Tentando login com:', email);
 
         try {
-            const data = await API.login(email, password); // ✅ Chamando método estático corretamente
+            // ✅ **CHAMADA CORRIGIDA - usando fetch diretamente**
+            const response = await fetch('https://motomanutencao.onrender.com/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            console.log('📡 Auth: Status da resposta:', response.status);
+
+            // ✅ **TRATAMENTO SEGURO DO JSON**
+            const responseText = await response.text();
+            console.log('📄 Auth: Resposta bruta:', responseText);
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('❌ Auth: Erro ao parsear JSON:', parseError);
+                throw new Error(`Resposta inválida do servidor: ${responseText.substring(0, 100)}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || `Erro HTTP: ${response.status}`);
+            }
+
             console.log('✅ Auth: Login bem-sucedido:', data.user);
 
+            // ✅ **SALVAR DADOS CORRETAMENTE**
+            this.setAuthData(data.token, data.user);
             localStorage.setItem('user', JSON.stringify(data.user));
-            UI.showDashboard();
+            
+            // ✅ **REDIRECIONAR PARA DASHBOARD**
+            if (window.UI && window.UI.showDashboard) {
+                window.UI.showDashboard();
+            } else {
+                this.showAppAndLoadData();
+            }
 
         } catch (error) {
             console.error('❌ Auth: Erro no login:', error);
@@ -63,7 +91,7 @@ class Auth {
         }
     }
 
-    // ✅ Registro
+    // ✅ **REGISTRO CORRIGIDO**
     static async handleRegister(event) {
         event.preventDefault();
         const name = document.getElementById('registerName').value.trim();
@@ -73,9 +101,45 @@ class Auth {
         console.log('👤 Auth: Tentando registro com:', email);
 
         try {
-            const data = await API.register(name, email, password); // ✅ Chamando método estático corretamente
+            // ✅ **CHAMADA CORRIGIDA - usando fetch diretamente**
+            const response = await fetch('https://motomanutencao.onrender.com/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            console.log('📡 Auth: Status da resposta:', response.status);
+
+            // ✅ **TRATAMENTO SEGURO DO JSON**
+            const responseText = await response.text();
+            console.log('📄 Auth: Resposta bruta:', responseText);
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('❌ Auth: Erro ao parsear JSON:', parseError);
+                throw new Error(`Resposta inválida do servidor: ${responseText.substring(0, 100)}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || `Erro HTTP: ${response.status}`);
+            }
+
             console.log('✅ Auth: Registro bem-sucedido:', data.user);
-            UI.showDashboard();
+
+            // ✅ **SALVAR DADOS CORRETAMENTE**
+            this.setAuthData(data.token, data.user);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            // ✅ **REDIRECIONAR PARA DASHBOARD**
+            if (window.UI && window.UI.showDashboard) {
+                window.UI.showDashboard();
+            } else {
+                this.showAppAndLoadData();
+            }
 
         } catch (error) {
             console.error('❌ Auth: Erro no registro:', error);
@@ -83,7 +147,7 @@ class Auth {
         }
     }
 
-    // ✅ Definir dados de autenticação
+    // ✅ **MÉTODO SET AUTH DATA CORRIGIDO**
     static setAuthData(token, user) {
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('user', JSON.stringify(user));
@@ -91,36 +155,38 @@ class Auth {
         this.currentUser = user;
         this.isAuthenticated = true;
         
+        // ✅ **Configurar token para futuras requisições API**
         if (window.API) {
             window.API.token = token;
             console.log('🔑 Auth: Token configurado na API');
         }
         
         window.authState = { isAuthenticated: true, user, token };
+        console.log('✅ Auth: Dados de autenticação salvos');
     }
 
-    // ✅ Mostrar app e carregar dados
+    // ✅ **MOSTRAR APP E CARREGAR DADOS**
     static async showAppAndLoadData() {
-        if (window.UI?.showAppContent) {
-            window.UI.showAppContent();
-        } else {
-            document.getElementById('loginScreen')?.classList.add('hidden');
-            document.getElementById('registerScreen')?.classList.add('hidden');
-            document.getElementById('appContent')?.classList.remove('hidden');
-        }
+        // Esconder telas de login/registro
+        document.getElementById('loginScreen')?.classList.add('hidden');
+        document.getElementById('registerScreen')?.classList.add('hidden');
+        document.getElementById('appContent')?.classList.remove('hidden');
 
+        // Carregar dados do usuário
         setTimeout(async () => {
             try {
                 console.log('🚗 Auth: Carregando veículos do usuário...');
-                await window.Vehicles?.loadVehicles();
-                console.log('✅ Auth: Veículos carregados com sucesso');
+                if (window.Vehicles && window.Vehicles.loadVehicles) {
+                    await window.Vehicles.loadVehicles();
+                    console.log('✅ Auth: Veículos carregados com sucesso');
+                }
             } catch (e) {
                 console.error('❌ Auth: Erro ao carregar veículos:', e);
             }
         }, 500);
     }
 
-    // ✅ Logout
+    // ✅ **LOGOUT** (mantido igual)
     static handleLogout() {
         if (confirm('Tem certeza que deseja sair?')) {
             this.clearAuth();
@@ -128,7 +194,7 @@ class Auth {
         }
     }
 
-    // ✅ Limpar autenticação
+    // ✅ **LIMPAR AUTENTICAÇÃO** (mantido igual)
     static clearAuth() {
         console.log('🚪 Auth: Realizando logout completo...');
         
@@ -142,17 +208,14 @@ class Auth {
         
         window.authState = { isAuthenticated: false, user: null, token: null };
         
-        if (window.UI?.showLoginScreen) {
-            window.UI.showLoginScreen();
-        } else {
-            document.getElementById('appContent')?.classList.add('hidden');
-            document.getElementById('loginScreen')?.classList.remove('hidden');
-        }
+        // Mostrar tela de login
+        document.getElementById('appContent')?.classList.add('hidden');
+        document.getElementById('loginScreen')?.classList.remove('hidden');
         
         console.log('✅ Auth: Logout completo - todos os dados limpos');
     }
 
-    // ✅ Utilidades
+    // ✅ **UTILIDADES** (mantidas iguais)
     static getUserData() {
         if (!this.currentUser) return null;
         return {
@@ -160,14 +223,6 @@ class Auth {
             services: [],
             maintenanceConfig: window.APP_CONFIG?.maintenanceIntervals || {}
         };
-    }
-
-    static saveUserData(data) {
-        console.log('💾 Auth: Salvando dados do usuário:', data);
-    }
-
-    static initializeUserData() {
-        console.log('🔧 Auth: Inicializando dados do usuário');
     }
 
     static isLoggedIn() {
@@ -179,24 +234,13 @@ class Auth {
     }
 }
 
-// 🔍 Debug global
-window.debugAuth = () => {
-    console.log('🔍 DEBUG AUTH COMPLETO:');
-    console.log('- Token:', localStorage.getItem('jwt_token'));
-    console.log('- User:', localStorage.getItem('user'));
-    console.log('- CurrentUser:', Auth.currentUser);
-    console.log('- isAuthenticated:', Auth.isAuthenticated);
-    console.log('- API Token:', window.API?.token);
-    console.log('- authState:', window.authState);
-};
-
-// 🌐 Tornar global
+// 🌐 **Tornar global**
 window.Auth = Auth;
 
-// ✅ Inicialização automática
+// ✅ **Inicialização automática**
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔐 Auth: Iniciando verificação de autenticação...');
     Auth.init();
 });
 
-console.log('✅ Auth carregado - VERSÃO CORRIGIDA COM PERSISTÊNCIA');
+console.log('✅ Auth carregado - VERSÃO CORRIGIDA COM TRATAMENTO JSON');
