@@ -3,13 +3,13 @@ class Auth {
     static currentUser = null;
     static isAuthenticated = false;
 
-    // ✅ NOVO: Inicialização automática
+    // ✅ Inicialização automática
     static init() {
         console.log('🔐 Auth: Inicializando e verificando autenticação salva...');
         return this.checkAuthStatus();
     }
 
-    // ✅ MELHORADO: Verificar autenticação com mais detalhes
+    // ✅ Verificar autenticação
     static checkAuthStatus() {
         const token = localStorage.getItem('jwt_token');
         const user = localStorage.getItem('user');
@@ -23,7 +23,7 @@ class Auth {
                 this.currentUser = JSON.parse(user);
                 this.isAuthenticated = true;
                 
-                // ✅ GARANTIR que a API tem o token
+                // ✅ Garantir que a API tenha o token
                 if (window.API) {
                     window.API.token = token;
                     console.log('🔑 Auth: Token definido na API');
@@ -31,7 +31,6 @@ class Auth {
                 
                 console.log('✅ Auth: Usuário recuperado:', this.currentUser.email);
                 return true;
-                
             } catch (error) {
                 console.error('❌ Auth: Erro ao recuperar usuário:', error);
                 this.clearAuth(); // Limpar dados corrompidos
@@ -43,69 +42,65 @@ class Auth {
         return false;
     }
 
-    // ✅ MELHORADO: Processar login com persistência robusta
-    static async handleLogin(event = null) {
-        if (event) event.preventDefault();
-        
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        
+    // ✅ Login
+    static async handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
         console.log('🔐 Auth: Tentando login com:', email);
 
         try {
-            if (!API?.login) {
-                throw new Error('API não carregada corretamente');
-            }
+            const data = await API.login(email, password); // ✅ Chamando método estático corretamente
+            console.log('✅ Auth: Login bem-sucedido:', data.user);
 
-            const result = await window.API.login(email, password);
-            console.log('✅ Auth: Login bem-sucedido:', result);
-
-            // ✅ PERSISTÊNCIA ROBUSTA
-            this.setAuthData(result.token, result.user);
-            
-            console.log('💾 Auth: Dados salvos no localStorage');
-            console.log('👤 Usuário:', this.currentUser.email);
-            console.log('🔑 Token:', this.token ? '✅ Definido' : '❌ Falhou');
-
-            // ✅ MOSTRAR APP E CARREGAR DADOS
-            this.showAppAndLoadData();
-            
-            return true;
+            localStorage.setItem('user', JSON.stringify(data.user));
+            UI.showDashboard();
 
         } catch (error) {
             console.error('❌ Auth: Erro no login:', error);
             alert('Erro no login: ' + error.message);
-            return false;
         }
     }
 
-    // ✅ NOVO: Função para definir dados de autenticação
+    // ✅ Registro
+    static async handleRegister(event) {
+        event.preventDefault();
+        const name = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const password = document.getElementById('registerPassword').value.trim();
+
+        console.log('👤 Auth: Tentando registro com:', email);
+
+        try {
+            const data = await API.register(name, email, password); // ✅ Chamando método estático corretamente
+            console.log('✅ Auth: Registro bem-sucedido:', data.user);
+            UI.showDashboard();
+
+        } catch (error) {
+            console.error('❌ Auth: Erro no registro:', error);
+            alert('Erro no registro: ' + error.message);
+        }
+    }
+
+    // ✅ Definir dados de autenticação
     static setAuthData(token, user) {
-        // Salvar no localStorage
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('user', JSON.stringify(user));
         
-        // Atualizar estado interno
         this.currentUser = user;
         this.isAuthenticated = true;
         
-        // Configurar API
         if (window.API) {
             window.API.token = token;
             console.log('🔑 Auth: Token configurado na API');
         }
         
-        // Atualizar estado global para outros módulos
-        window.authState = {
-            isAuthenticated: true,
-            user: user,
-            token: token
-        };
+        window.authState = { isAuthenticated: true, user, token };
     }
 
-    // ✅ NOVO: Mostrar app e carregar dados
+    // ✅ Mostrar app e carregar dados
     static async showAppAndLoadData() {
-        // Mostrar app content
         if (window.UI?.showAppContent) {
             window.UI.showAppContent();
         } else {
@@ -114,7 +109,6 @@ class Auth {
             document.getElementById('appContent')?.classList.remove('hidden');
         }
 
-        // ✅ CARREGAR DADOS DO USUÁRIO
         setTimeout(async () => {
             try {
                 console.log('🚗 Auth: Carregando veículos do usuário...');
@@ -126,51 +120,7 @@ class Auth {
         }, 500);
     }
 
-    // ✅ MELHORADO: Processar cadastro
-    static async handleRegister(event = null) {
-        if (event) event.preventDefault();
-
-        const name = document.getElementById('registerName').value;
-        const email = document.getElementById('registerEmail').value;
-        const password = document.getElementById('registerPassword').value;
-        const confirmPassword = document.getElementById('registerConfirmPassword').value;
-
-        if (password !== confirmPassword) {
-            alert('As senhas não coincidem!');
-            return false;
-        }
-        if (password.length < 6) {
-            alert('A senha deve ter pelo menos 6 caracteres!');
-            return false;
-        }
-
-        try {
-            if (!API?.register) {
-                throw new Error('API não carregada corretamente');
-            }
-
-            const result = await window.API.register(name, email, password);
-            console.log('✅ Auth: Cadastro bem-sucedido:', result);
-
-            // ✅ PERSISTÊNCIA ROBUSTA
-            this.setAuthData(result.token, result.user);
-            
-            console.log('💾 Auth: Dados de cadastro salvos no localStorage');
-
-            // ✅ MOSTRAR APP E CARREGAR DADOS
-            this.showAppAndLoadData();
-            
-            alert('Cadastro realizado com sucesso!');
-            return true;
-
-        } catch (error) {
-            console.error('❌ Auth: Erro no cadastro:', error);
-            alert('Erro no cadastro: ' + error.message);
-            return false;
-        }
-    }
-
-    // ✅ MELHORADO: Logout completo
+    // ✅ Logout
     static handleLogout() {
         if (confirm('Tem certeza que deseja sair?')) {
             this.clearAuth();
@@ -178,27 +128,20 @@ class Auth {
         }
     }
 
-    // ✅ NOVO: Limpar autenticação completamente
+    // ✅ Limpar autenticação
     static clearAuth() {
         console.log('🚪 Auth: Realizando logout completo...');
         
-        // Limpar localStorage
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('user');
         
-        // Limpar estado interno
         this.currentUser = null;
         this.isAuthenticated = false;
         
-        // Limpar API
-        if (window.API) {
-            window.API.token = null;
-        }
+        if (window.API) window.API.token = null;
         
-        // Limpar estado global
         window.authState = { isAuthenticated: false, user: null, token: null };
         
-        // Mostrar tela de login
         if (window.UI?.showLoginScreen) {
             window.UI.showLoginScreen();
         } else {
@@ -209,7 +152,7 @@ class Auth {
         console.log('✅ Auth: Logout completo - todos os dados limpos');
     }
 
-    // ✅ MANTIDO: Obter dados do usuário atual
+    // ✅ Utilidades
     static getUserData() {
         if (!this.currentUser) return null;
         return {
@@ -227,18 +170,16 @@ class Auth {
         console.log('🔧 Auth: Inicializando dados do usuário');
     }
 
-    // ✅ NOVO: Verificar se está autenticado
     static isLoggedIn() {
         return this.isAuthenticated && this.currentUser !== null;
     }
 
-    // ✅ NOVO: Obter token atual
     static getToken() {
         return localStorage.getItem('jwt_token');
     }
 }
 
-// Debug
+// 🔍 Debug global
 window.debugAuth = () => {
     console.log('🔍 DEBUG AUTH COMPLETO:');
     console.log('- Token:', localStorage.getItem('jwt_token'));
@@ -249,10 +190,10 @@ window.debugAuth = () => {
     console.log('- authState:', window.authState);
 };
 
-// Global
+// 🌐 Tornar global
 window.Auth = Auth;
 
-// ✅ INICIALIZAÇÃO AUTOMÁTICA quando o script carrega
+// ✅ Inicialização automática
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔐 Auth: Iniciando verificação de autenticação...');
     Auth.init();
