@@ -1,6 +1,30 @@
-// api.js - Adicione esta flag para desativar requisições reais
+// api.js - CORREÇÃO SIMPLES
 window.USE_MOCK_MODE = true;
 
+class API {
+    static token = null;
+    
+    constructor() {
+        console.log('🌐 API: Inicializada em modo MOCK');
+    }
+
+    // Mock todas as requisições
+    static async request(endpoint, options = {}) {
+        console.log(`🔄 API: Mock para ${endpoint}`);
+        return { success: true, data: [] };
+    }
+
+    static async login(email, password) {
+        return { success: true, token: 'mock', user: { email } };
+    }
+
+    static async register(name, email, password) {
+        return { success: true, token: 'mock', user: { name, email } };
+    }
+}
+
+window.API = API;
+console.log('✅ API carregada - MODO MOCK');
 // Modifique a função request para usar mock quando necessário
 async function request(endpoint, options = {}) {
     if (window.USE_MOCK_MODE) {
