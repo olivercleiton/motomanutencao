@@ -1,5 +1,5 @@
 class API {
-    // ✅ MELHORADO: URL base com mais opções
+     // ✅ MELHORADO: URL base com mais opções
     static get BASE_URL() {
         // Se estiver em desenvolvimento (localhost)
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
