@@ -2,7 +2,7 @@ import os
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../static')
 CORS(app)
 
 # ========== ROTAS DO FRONTEND ==========
@@ -14,9 +14,28 @@ def serve_frontend():
     except Exception as e:
         return jsonify({"error": f"Frontend not found: {str(e)}"}), 404
 
+# Rota específica para arquivos JS
+@app.route('/static/js/<path:filename>')
+def serve_js(filename):
+    """Serve arquivos JavaScript"""
+    try:
+        return send_from_directory('../static/js', filename)
+    except Exception as e:
+        return jsonify({"error": f"JS file not found: {str(e)}"}), 404
+
+# Rota específica para arquivos CSS
+@app.route('/static/css/<path:filename>')
+def serve_css(filename):
+    """Serve arquivos CSS"""
+    try:
+        return send_from_directory('../static/css', filename)
+    except Exception as e:
+        return jsonify({"error": f"CSS file not found: {str(e)}"}), 404
+
+# Rota genérica para outros arquivos estáticos
 @app.route('/<path:path>')
 def serve_static_files(path):
-    """Serve arquivos estáticos (CSS, JS, imagens)"""
+    """Serve outros arquivos estáticos"""
     try:
         return send_from_directory('../static', path)
     except Exception as e:
