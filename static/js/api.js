@@ -1,3 +1,13 @@
+// api.js - Adicione esta flag para desativar requisições reais
+window.USE_MOCK_MODE = true;
+
+// Modifique a função request para usar mock quando necessário
+async function request(endpoint, options = {}) {
+    if (window.USE_MOCK_MODE) {
+        console.log(`🔄 API: Mock mode para ${endpoint} - Retornando sucesso`);
+        return { success: true, data: [] };
+    }
+
 class API {
      // ✅ MELHORADO: URL base com mais opções
     static get BASE_URL() {
