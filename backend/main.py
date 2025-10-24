@@ -44,4 +44,6 @@ def create_user():
     return jsonify({"message": "User criado com sucesso! (banco desativado)"}), 201
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # CONFIGURAÇÃO PARA RENDER - porta e host corretos
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
